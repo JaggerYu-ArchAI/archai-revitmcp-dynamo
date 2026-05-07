@@ -1,9 +1,0 @@
-*.log
-.DS_Store
-node_modules/
-.idea/
-.vscode/
-__pycache__/
-*.pyc
-*.dyn~
-*.bak
