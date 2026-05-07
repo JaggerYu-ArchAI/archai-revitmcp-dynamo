@@ -1,0 +1,170 @@
+{
+  "Uuid": "98da0e73-4ccc-47fe-86b7-ed0b0021a9b6",
+  "IsCustomNode": true,
+  "Category": "ArchAI.Common",
+  "Description": "Supports Markdown-formatted text input for polisher formatted display | 支持 Markdown 格式文本输入，实现内容美化格式化展示",
+  "Name": "MarkdownViewer",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "# Dynamo CPython3 | 最终稳定版（逐行表格解析，100%稳定 + 支持引用语法）\r\nimport clr\r\nimport re\r\n\r\n# 加载.NET 必需程序集\r\nclr.AddReference(\"System.Windows.Forms\")\r\nclr.AddReference(\"System.Drawing\")\r\nclr.AddReference(\"System\")\r\n\r\nfrom System.Windows.Forms import Form, WebBrowser, DockStyle, FormBorderStyle, FormStartPosition, Application\r\nfrom System.Drawing import Size\r\nfrom System import AppDomain\r\n\r\n# --------------------------\r\n# 全局配置\r\n# --------------------------\r\nWINDOW_TITLE = \"ArchAI 内容面板\"\r\nAPP_DOMAIN_KEY = \"DEEPSEEK_FINAL_INSTANCE\"\r\n\r\n# --------------------------\r\n# 核心：查找已存在的目标窗口（单窗口不重复）\r\n# --------------------------\r\ndef find_existing_window():\r\n    target_window = None\r\n    try:\r\n        all_open_forms = Application.OpenForms\r\n        for i in range(all_open_forms.Count):\r\n            form = all_open_forms[i]\r\n            if form.Text == WINDOW_TITLE and not form.IsDisposed:\r\n                if target_window is None:\r\n                    target_window = form\r\n                else:\r\n                    form.Close()\r\n                    form.Dispose()\r\n    except:\r\n        try:\r\n            stored_form = AppDomain.CurrentDomain.GetData(APP_DOMAIN_KEY)\r\n            if stored_form is not None and not stored_form.IsDisposed:\r\n                target_window = stored_form\r\n        except:\r\n            target_window = None\r\n    return target_window\r\n\r\n# --------------------------\r\n# 【核心重构】逐行状态机解析Markdown表格\r\n# --------------------------\r\ndef parse_all_tables(text):\r\n    lines = text.split('\\n')\r\n    processed_lines = []\r\n    tables = []\r\n    in_table = False\r\n    current_table_rows = []\r\n\r\n    def is_table_line(line):\r\n        stripped = line.strip()\r\n        return '|' in stripped and stripped.count('|') >= 2\r\n\r\n    def is_separator_line(line):\r\n        if not is_table_line(line):\r\n            return False\r\n        cells = [cell.strip() for cell in line.strip().strip('|').split('|')]\r\n        for cell in cells:\r\n            if not re.match(r'^:?-+:?$', cell):\r\n                return False\r\n        return True\r\n\r\n    def split_table_cells(line):\r\n        return [cell.strip() for cell in line.strip().strip('|').split('|')]\r\n\r\n    def table_to_html(table_rows):\r\n        if len(table_rows) < 2:\r\n            return '\\n'.join(table_rows)\r\n        header_cells = split_table_cells(table_rows[0])\r\n        separator_cells = split_table_cells(table_rows[1])\r\n        col_count = len(separator_cells)\r\n        data_rows = table_rows[2:]\r\n\r\n        def pad_cells(cells, target):\r\n            padded = cells[:target]\r\n            while len(padded) < target:\r\n                padded.append('')\r\n            return padded\r\n\r\n        header_padded = pad_cells(header_cells, col_count)\r\n        data_padded = [pad_cells(split_table_cells(row), col_count) for row in data_rows]\r\n\r\n        header_html = '<tr>' + ''.join([f'<th>{cell}</th>' for cell in header_padded]) + '</tr>'\r\n        body_html = ''\r\n        for row in data_padded:\r\n            body_html += '<tr>' + ''.join([f'<td>{cell}</td>' for cell in row]) + '</tr>'\r\n\r\n        full_table = f\"\"\"\r\n        <table>\r\n            <thead>{header_html}</thead>\r\n            <tbody>{body_html}</tbody>\r\n        </table>\r\n        \"\"\"\r\n        return full_table\r\n\r\n    i = 0\r\n    total_lines = len(lines)\r\n    while i < total_lines:\r\n        current_line = lines[i]\r\n        if not in_table:\r\n            if i + 1 < total_lines and is_table_line(current_line) and is_separator_line(lines[i+1]):\r\n                in_table = True\r\n                current_table_rows = [current_line, lines[i+1]]\r\n                i += 2\r\n            else:\r\n                processed_lines.append(current_line)\r\n                i += 1\r\n        else:\r\n            if is_table_line(current_line):\r\n                current_table_rows.append(current_line)\r\n                i += 1\r\n            else:\r\n                table_html = table_to_html(current_table_rows)\r\n                tables.append(table_html)\r\n                processed_lines.append(f\"@@@TABLE_{len(tables)-1}@@@\")\r\n                in_table = False\r\n                current_table_rows = []\r\n    if in_table and len(current_table_rows) >= 2:\r\n        table_html = table_to_html(current_table_rows)\r\n        tables.append(table_html)\r\n        processed_lines.append(f\"@@@TABLE_{len(tables)-1}@@@\")\r\n    return '\\n'.join(processed_lines), tables\r\n\r\n# --------------------------\r\n# 新增：解析 Markdown 引用语法 > （核心升级）\r\n# --------------------------\r\ndef parse_blockquotes(text):\r\n    lines = text.split('\\n')\r\n    new_lines = []\r\n    in_quote = False\r\n    quote_content = []\r\n    \r\n    for line in lines:\r\n        stripped = line.strip()\r\n        # 识别以 > 开头的引用行\r\n        if stripped.startswith('>'):\r\n            in_quote = True\r\n            # 去掉 > 和空格，提取纯文本\r\n            content = stripped.lstrip('>').strip()\r\n            quote_content.append(content)\r\n        else:\r\n            # 退出引用，拼接HTML\r\n            if in_quote:\r\n                in_quote = False\r\n                quote_html = f\"<blockquote>{'<br>'.join(quote_content)}</blockquote>\"\r\n                new_lines.append(quote_html)\r\n                quote_content = []\r\n            new_lines.append(line)\r\n    # 处理末尾的引用\r\n    if in_quote:\r\n        quote_html = f\"<blockquote>{'<br>'.join(quote_content)}</blockquote>\"\r\n        new_lines.append(quote_html)\r\n    return '\\n'.join(new_lines)\r\n\r\n# --------------------------\r\n# 全功能Markdown转HTML\r\n# --------------------------\r\ndef markdown_to_html_stable(md_text):\r\n    if not md_text:\r\n        return \"<p>无内容</p>\"\r\n\r\n    md_text = md_text.replace('\\r\\n', '\\n').replace('\\r', '\\n')\r\n\r\n    # 1. 代码块\r\n    code_blocks = []\r\n    def save_code_block(match):\r\n        code_blocks.append(match.group(0))\r\n        return f\"@@@CODE_BLOCK_{len(code_blocks)-1}@@@\"\r\n    code_pattern = re.compile(r'```[\\s\\S]*?```', re.MULTILINE)\r\n    processed_text = code_pattern.sub(save_code_block, md_text)\r\n\r\n    # 2. 表格\r\n    processed_text, tables = parse_all_tables(processed_text)\r\n\r\n    # 3. 分割线\r\n    hr_regex = re.compile(r'^\\s*([-*])\\1{2,}\\s*$', re.MULTILINE)\r\n    processed_text = hr_regex.sub('<hr>', processed_text)\r\n\r\n    # 4. 标题\r\n    for level in range(6, 0, -1):\r\n        prefix = '#' * level\r\n        lines = processed_text.split('\\n')\r\n        new_lines = []\r\n        for line in lines:\r\n            stripped = line.strip()\r\n            if stripped.startswith(f'{prefix} ') and not line.startswith('@@@'):\r\n                new_lines.append(f'<h{level}>{stripped[len(prefix)+1:]}</h{level}>')\r\n            else:\r\n                new_lines.append(line)\r\n        processed_text = '\\n'.join(new_lines)\r\n    \r\n    # 🔥 5. 新增：解析引用语法 >\r\n    processed_text = parse_blockquotes(processed_text)\r\n\r\n    # 6. 无序列表\r\n    lines = processed_text.split('\\n')\r\n    in_ul = False\r\n    new_lines = []\r\n    for line in lines:\r\n        stripped = line.strip()\r\n        if stripped.startswith(('* ', '- ')) and not stripped.startswith('@@@') and '|' not in stripped:\r\n            if not in_ul:\r\n                new_lines.append('<ul>')\r\n                in_ul = True\r\n            new_lines.append(f'<li>{stripped[2:]}</li>')\r\n        else:\r\n            if in_ul:\r\n                new_lines.append('</ul>')\r\n                in_ul = False\r\n            new_lines.append(line)\r\n    if in_ul:\r\n        new_lines.append('</ul>')\r\n    processed_text = '\\n'.join(new_lines)\r\n    \r\n    # 7. 有序列表\r\n    lines = processed_text.split('\\n')\r\n    in_ol = False\r\n    new_lines = []\r\n    for line in lines:\r\n        stripped = line.strip()\r\n        if re.match(r'^\\d+\\.\\s', stripped) and not stripped.startswith('@@@') and '|' not in stripped:\r\n            if not in_ol:\r\n                new_lines.append('<ol>')\r\n                in_ol = True\r\n            content = re.sub(r'^\\d+\\.\\s', '', stripped)\r\n            new_lines.append(f'<li>{content}</li>')\r\n        else:\r\n            if in_ol:\r\n                new_lines.append('</ol>')\r\n                in_ol = False\r\n            new_lines.append(line)\r\n    if in_ol:\r\n        new_lines.append('</ol>')\r\n    processed_text = '\\n'.join(new_lines)\r\n\r\n    # 8. 行内格式（加粗/斜体）\r\n    while '**' in processed_text:\r\n        processed_text = processed_text.replace('**', '<strong>', 1)\r\n        processed_text = processed_text.replace('**', '</strong>', 1)\r\n    \r\n    def italic_replace(match):\r\n        content = match.group(1)\r\n        return f'<em>{content}</em>'\r\n    italic_regex = re.compile(r'\\*([^*]+?)\\*')\r\n    processed_text = italic_regex.sub(italic_replace, processed_text)\r\n\r\n    # 9. 段落处理\r\n    lines = processed_text.split('\\n')\r\n    new_lines = []\r\n    for line in lines:\r\n        stripped = line.strip()\r\n        if not stripped:\r\n            continue\r\n        # 跳过HTML标签、占位符，不重复包裹\r\n        if stripped.startswith(('<', '@@@', '<blockquote>', '</blockquote>')):\r\n            new_lines.append(stripped)\r\n        else:\r\n            new_lines.append(f'<p>{stripped}</p>')\r\n    processed_text = '\\n'.join(new_lines)\r\n\r\n    # 还原内容\r\n    for i, table in enumerate(tables):\r\n        processed_text = processed_text.replace(f'@@@TABLE_{i}@@@', table)\r\n    for i, code_block in enumerate(code_blocks):\r\n        lines = code_block.split('\\n')\r\n        lang = lines[0].replace('```', '').strip()\r\n        code_content = '\\n'.join(lines[1:-1])\r\n        code_escaped = code_content.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')\r\n        code_html = f'<pre><code class=\"{lang}\">{code_escaped}</code></pre>'\r\n        processed_text = processed_text.replace(f'@@@CODE_BLOCK_{i}@@@', code_html)\r\n\r\n    return processed_text\r\n\r\n# --------------------------\r\n# 创建/刷新窗口\r\n# --------------------------\r\ndef show_or_refresh_window(md_content):\r\n    html_body = markdown_to_html_stable(md_content)\r\n    \r\n    full_html = f\"\"\"\r\n    <!DOCTYPE html>\r\n    <html lang=\"zh-CN\">\r\n    <head>\r\n        <meta charset=\"UTF-8\">\r\n        <meta http-equiv=\"X-UA-Compatible\" content=\"IE=11\">\r\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n        <title>DeepSeek Content</title>\r\n        <style>\r\n            * {{\r\n                margin: 0;\r\n                padding: 0;\r\n                box-sizing: border-box;\r\n                -webkit-font-smoothing: antialiased;\r\n                text-rendering: optimizeLegibility;\r\n            }}\r\n            body {{\r\n                font-family: \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Segoe UI\", system-ui, sans-serif;\r\n                font-size: 15px;\r\n                font-weight: 400;\r\n                line-height: 1.75;\r\n                letter-spacing: 0.2px;\r\n                color: #2c3e50;\r\n                background-color: #ffffff;\r\n                padding: 40px 32px;\r\n                max-width: 1000px;\r\n                margin: 0 auto;\r\n                word-wrap: break-word;\r\n                white-space: normal;\r\n            }}\r\n            h1, h2, h3, h4, h5, h6 {{\r\n                color: #1a2530;\r\n                font-weight: 600;\r\n                line-height: 1.3;\r\n                margin: 32px 0 16px 0;\r\n            }}\r\n            h1 {{\r\n                font-size: 26px;\r\n                font-weight: 700;\r\n                padding-bottom: 12px;\r\n                border-bottom: 1px solid #eaecef;\r\n            }}\r\n            h2 {{\r\n                font-size: 22px;\r\n                padding-bottom: 8px;\r\n            }}\r\n            h3 {{\r\n                font-size: 19px;\r\n            }}\r\n            p {{\r\n                margin-bottom: 16px;\r\n            }}\r\n            ul, ol {{\r\n                margin: 0 0 16px 32px;\r\n            }}\r\n            li {{\r\n                margin-bottom: 8px;\r\n            }}\r\n            hr {{\r\n                border: none;\r\n                height: 1px;\r\n                background-color: #e5e7eb;\r\n                margin: 32px 0;\r\n            }}\r\n            pre {{\r\n                background-color: #f8fafc;\r\n                border-radius: 8px;\r\n                padding: 20px 24px;\r\n                margin: 0 0 20px 0;\r\n                overflow-x: auto;\r\n                line-height: 1.6;\r\n                border: 1px solid #f1f5f9;\r\n            }}\r\n            code {{\r\n                font-family: \"Cascadia Code\", \"Consolas\", \"Courier New\", monospace;\r\n                font-size: 14px;\r\n            }}\r\n            p code, li code {{\r\n                background-color: #f1f5f9;\r\n                color: #e11d48;\r\n                padding: 3px 7px;\r\n                border-radius: 4px;\r\n                font-size: 13px;\r\n            }}\r\n            table {{\r\n                border-collapse: collapse;\r\n                width: 100%;\r\n                margin: 20px 0;\r\n                overflow-x: auto;\r\n                display: block;\r\n                border-radius: 8px;\r\n                border: 1px solid #d1d5db;\r\n                font-size: 14px;\r\n            }}\r\n            table th, table td {{\r\n                padding: 12px 16px;\r\n                text-align: left;\r\n                border-bottom: 1px solid #d1d5db;\r\n                border-right: 1px solid #d1d5db;\r\n                word-break: keep-all;\r\n                white-space: nowrap;\r\n            }}\r\n            table th:last-child, table td:last-child {{\r\n                border-right: none;\r\n            }}\r\n            table tr:last-child td {{\r\n                border-bottom: none;\r\n            }}\r\n            table th {{\r\n                background-color: #f3f4f6;\r\n                font-weight: 600;\r\n                color: #111827;\r\n            }}\r\n            table tr:nth-child(even) {{\r\n                background-color: #f9fafb;\r\n            }}\r\n            /* 引用块样式（已内置，完美生效） */\r\n            blockquote {{\r\n                border-left: 4px solid #165dff;\r\n                background-color: #f0f7ff;\r\n                padding: 14px 20px;\r\n                margin: 0 0 20px 0;\r\n                color: #475569;\r\n                border-radius: 0 6px 6px 0;\r\n            }}\r\n            blockquote p {{\r\n                margin: 0;\r\n            }}\r\n            a {{\r\n                color: #165dff;\r\n                text-decoration: none;\r\n                font-weight: 500;\r\n            }}\r\n            strong {{\r\n                font-weight: 600;\r\n                color: #1a2530;\r\n            }}\r\n            em {{\r\n                font-style: italic;\r\n                color: #475569;\r\n            }}\r\n        </style>\r\n    </head>\r\n    <body>\r\n        {html_body}\r\n    </body>\r\n    </html>\r\n    \"\"\"\r\n\r\n    existing_window = find_existing_window()\r\n    if existing_window is not None:\r\n        try:\r\n            web_browser = existing_window.Controls[0]\r\n            web_browser.DocumentText = full_html\r\n            existing_window.Activate()\r\n            existing_window.BringToFront()\r\n            return \"✅ 成功：支持引用语法，内容已刷新\"\r\n        except Exception as e:\r\n            try:\r\n                existing_window.Close()\r\n                existing_window.Dispose()\r\n            except:\r\n                pass\r\n\r\n    new_form = Form()\r\n    new_form.Text = WINDOW_TITLE\r\n    new_form.Size = Size(1000, 1000)\r\n    new_form.StartPosition = FormStartPosition.CenterScreen\r\n    new_form.FormBorderStyle = FormBorderStyle.Sizable\r\n    web_browser = WebBrowser()\r\n    web_browser.Dock = DockStyle.Fill\r\n    web_browser.ScrollBarsEnabled = True\r\n    web_browser.ScriptErrorsSuppressed = True\r\n    web_browser.DocumentText = full_html\r\n    new_form.Controls.Add(web_browser)\r\n    new_form.Show()\r\n\r\n    try:\r\n        AppDomain.CurrentDomain.SetData(APP_DOMAIN_KEY, new_form)\r\n    except:\r\n        pass\r\n    return \"✅ 成功：支持引用语法，窗口已创建\"\r\n\r\n# --------------------------\r\n# 主执行逻辑\r\n# --------------------------\r\nmd_input = IN[0] if len(IN) > 0 and IN[0] is not None else \"无输入内容\"\r\nOUT = show_or_refresh_window(md_input)",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "d127e9dc1cc941e59261d4894df7f2b3",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "27d4859fcc6747a7912fa48e87a15030",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "962e1e30dca04ac19d4552232bc4445d",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "Parameter": {
+        "Name": "Markdown",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": " Input Markdown-formatted Text Content\n 输入 Markdown 格式文本内容"
+      },
+      "Id": "4fea63e263044e5588d1c074d43e4e46",
+      "NodeType": "InputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "95002beb829043869b1d9586e8c43eb0",
+          "Name": "",
+          "Description": "输入数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "函数参数，用于自定义节点。\r\n\r\n可以指定参数的类型和默认值。例如: \r\n\r\n输入: 变量 []... []\r\n值: bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "ElementResolver": null,
+      "Symbol": "Void",
+      "Id": "b21f2067f88f43839d57e2c067cdc497",
+      "NodeType": "OutputNode",
+      "Inputs": [
+        {
+          "Id": "ad03ce7efa164adb9133f8cf32115b5a",
+          "Name": "",
+          "Description": "输出数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "函数输出，请使用自定义节点"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "962e1e30dca04ac19d4552232bc4445d",
+      "End": "ad03ce7efa164adb9133f8cf32115b5a",
+      "Id": "5c7fc79bc2f44fb198fb9196c53fd54d",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "95002beb829043869b1d9586e8c43eb0",
+      "End": "27d4859fcc6747a7912fa48e87a15030",
+      "Id": "f09d7046e8e94014a1bcacb0185e138c",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景预览(_B)",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "d127e9dc1cc941e59261d4894df7f2b3",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1036.0,
+        "Y": 273.5
+      },
+      {
+        "Id": "4fea63e263044e5588d1c074d43e4e46",
+        "Name": "Input",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 568.93187027253907,
+        "Y": 269.81406424337683
+      },
+      {
+        "Id": "b21f2067f88f43839d57e2c067cdc497",
+        "Name": "Output",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1271.3214713512375,
+        "Y": 270.86282759212986
+      }
+    ],
+    "Annotations": [],
+    "X": -350.86053964603161,
+    "Y": 44.0826752550509,
+    "Zoom": 1.13758205229474
+  }
+}

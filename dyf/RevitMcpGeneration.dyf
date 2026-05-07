@@ -1,0 +1,273 @@
+{
+  "Uuid": "2f5ee1dd-e622-4052-8ca8-1ab101eb5dcd",
+  "IsCustomNode": true,
+  "Category": "ArchAI.Modeling",
+  "Description": "Powered by AI & MCP, invoke usable Revit execution tools | AI + MCP 驱动，调用可用的 Revit 执行工具",
+  "Name": "RevitMcpGeneration",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys\r\nimport os\r\nimport json\r\n\r\n\r\n# 必须和Packages下的包文件夹名完全一致（大小写敏感）\r\nPACKAGE_NAME = \"ArchAI\"\r\nOUT = \"\"  # 初始化OUT，避免未定义\r\n\r\n# ===================== 1. 自动定位节点包的根路径 =====================\r\n# 获取APPDATA路径\r\nappdata = os.environ.get(\"APPDATA\")\r\n# 定位Dynamo Revit根目录\r\ndynamo_root = os.path.join(appdata, \"Dynamo\", \"Dynamo Revit\")\r\nif not os.path.isdir(dynamo_root):\r\n    print(f\"Dynamo根目录不存在 - {dynamo_root}\")\r\n# 遍历版本目录，查找包路径\r\nlib_path = None\r\ntry:\r\n    for version_dir in os.listdir(dynamo_root):\r\n        version_path = os.path.join(dynamo_root, version_dir)\r\n        # 跳过非目录\r\n        if not os.path.isdir(version_path):\r\n            continue\r\n        temp_lib = os.path.join(version_path, \"Packages\", PACKAGE_NAME)\r\n        # 找到第一个有效路径就停止\r\n        if os.path.exists(temp_lib):\r\n            lib_path = temp_lib\r\n            break\r\nexcept OSError as e:\r\n    print(f\"遍历目录时出错：{str(e)}\")\r\n\r\ndef get_package_lib_path():\r\n    if lib_path not in sys.path:\r\n        sys.path.append(lib_path)\r\n    return lib_path, f\"lib路径：{lib_path}\" if lib_path else \"未找到包的节点包目录\"\r\n\r\n\r\n# 加载路径\r\nget_package_lib_path()\r\n\r\n\r\n# ================================2. 主程序===========================\r\n# MCP多轮调用主入口\r\nfrom revit_mcp_tools.mcp_handler import multi_round_mcp_engine\r\n\r\n# Dynamo输入端口\r\nAPI_KEY = IN[0] if len(IN) > 0 else None\r\nUSER_QUERY = IN[1] if len(IN) > 1 else None\r\nMAX_ROUNDS = IN[2] if len(IN) > 2 and IN[2] else 10\r\n\r\ndef format_execution_history(history):\r\n    \"\"\"格式化执行历史为可读文本\"\"\"\r\n    result = []\r\n    result.append(\"=\" * 60)\r\n    result.append(\"【多轮MCP执行历史】\")\r\n    result.append(\"=\" * 60)\r\n    \r\n    for item in history:\r\n        round_num = item['round']\r\n        call_type = item['type']\r\n        \r\n        if call_type == 'ai_error':\r\n            result.append(f\"\\n第 {round_num} 轮 - AI错误\")\r\n            result.append(f\"  错误信息: {item['content'].get('error_info', '未知错误')}\")\r\n        else:\r\n            result.append(f\"\\n第 {round_num} 轮 - {call_type}\")\r\n            try:\r\n                ai_cmd = json.loads(item['ai_command'])\r\n                if ai_cmd.get('type') == 'finish':\r\n                    result.append(f\"  状态: 任务完成\")\r\n                    result.append(f\"  消息: {ai_cmd.get('message', '')}\")\r\n                else:\r\n                    result.append(f\"  工具: {ai_cmd.get('tool_name', 'unknown')}\")\r\n                    result.append(f\"  参数: {ai_cmd.get('parameters', {})}\")\r\n            except:\r\n                result.append(f\"  AI命令: {item['ai_command'][:100]}...\")\r\n            \r\n            tool_result = item['tool_result']\r\n            if tool_result.get('status') == 'success':\r\n                result.append(f\"  结果: 执行成功\")\r\n            elif tool_result.get('status') == 'finish':\r\n                result.append(f\"  结果: {tool_result.get('message', '任务完成')}\")\r\n            else:\r\n                result.append(f\"  结果: 失败 - {tool_result.get('error_info', '')}\")\r\n    \r\n    result.append(\"\\n\" + \"=\" * 60)\r\n    return \"\\n\".join(result)\r\n\r\ndef main():\r\n    # 1. 基础必填项校验\r\n    if not API_KEY or not USER_QUERY:\r\n        return [\"错误: API密钥和用户需求为必填项\", [], \"\"]\r\n    \r\n    # 2. 调用多轮MCP引擎\r\n    try:\r\n        result = multi_round_mcp_engine(USER_QUERY, API_KEY, MAX_ROUNDS)\r\n    except Exception as e:\r\n        return [f\"多轮引擎调用失败: {str(e)}\", [], \"\"]\r\n    \r\n    # 3. 格式化输出结果\r\n    execution_log = format_execution_history(result['execution_history'])\r\n    \r\n    # 4. 收集所有创建的元素（如果有）\r\n    created_elements = []\r\n    for item in result['execution_history']:\r\n        if item.get('tool_result', {}).get('status') == 'success':\r\n            data = item['tool_result'].get('data')\r\n            if isinstance(data, list):\r\n                created_elements.extend(data)\r\n            elif data is not None:\r\n                created_elements.append(data)\r\n    \r\n    # 5. 构建最终输出\r\n    summary = f\"多轮MCP执行完成 - 共 {result['total_rounds']} 轮\"\r\n    \r\n    final_result = result.get('final_result', {})\r\n    if final_result.get('status') == 'finish':\r\n        output_message = [summary, final_result.get('message', '')]\r\n    elif final_result.get('status') == 'success':\r\n        output_message = [summary, \"工具执行成功\"]\r\n    else:\r\n        output_message = [summary, f\"执行异常: {final_result.get('error_info', '')}\"]\r\n    \r\n    # 返回格式: [消息列表, 元素列表, 执行日志]\r\n    return [output_message, created_elements, execution_log]\r\n\r\n\r\n# 执行主程序\r\ntry:\r\n    OUT = main()\r\nexcept Exception as e:\r\n    OUT = [[f\"程序异常: {str(e)}\"], [], \"\"]",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "dcdd4fb05fc24f9ea45ea2985ebab109",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "cc85a98a99fc4ffcab2c76c1265a6a2c",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ab380bcc1f464dc2bc1a2ca111540b5b",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "e96a14321e4a4e9fa523e426d5f2917c",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "66693d3ad2334ad4b393248f6e85a7ba",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "Parameter": {
+        "Name": "max_rounds",
+        "TypeName": "int",
+        "TypeRank": 0,
+        "DefaultValue": "6",
+        "Description": " Max MCP Invocation Rounds, Default: 6\n 最大MCP调用轮次，默认值6"
+      },
+      "Id": "e8624747805740bdaa7d6a73d959f7d4",
+      "NodeType": "InputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "3489d678df4b4a60a87ad2fe127ccf7b",
+          "Name": "",
+          "Description": "输入数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "函数参数，用于自定义节点。\r\n\r\n可以指定参数的类型和默认值。例如: \r\n\r\n输入: 变量 []... []\r\n值: bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "Parameter": {
+        "Name": "api_key",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": null,
+        "Description": " API Keys, Default to DeepSeek\n API 密钥，默认为 DeepSeek 模型"
+      },
+      "Id": "1b071ee0fd1a4846b8feef2e6f69453e",
+      "NodeType": "InputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "517cfa7631494edaac17b5b937f4b69a",
+          "Name": "",
+          "Description": "输入数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "函数参数，用于自定义节点。\r\n\r\n可以指定参数的类型和默认值。例如: \r\n\r\n输入: 变量 []... []\r\n值: bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "Parameter": {
+        "Name": "user_query",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": null,
+        "Description": " Query Prompt\n 查询指令"
+      },
+      "Id": "d105341524444d1e8df1d8590e62bdd7",
+      "NodeType": "InputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "220e62ca63444eceb253ccfd34b16172",
+          "Name": "",
+          "Description": "输入数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "函数参数，用于自定义节点。\r\n\r\n可以指定参数的类型和默认值。例如: \r\n\r\n输入: 变量 []... []\r\n值: bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "ElementResolver": null,
+      "Symbol": "// AI-Generated Result\r\n// 返回 AI 生成的结果\r\nResult",
+      "Id": "c264264031844ab0896e037c8d731d20",
+      "NodeType": "OutputNode",
+      "Inputs": [
+        {
+          "Id": "9394a2bf23cf4817ae0ff3037a629f18",
+          "Name": "",
+          "Description": "输出数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "函数输出，请使用自定义节点"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "66693d3ad2334ad4b393248f6e85a7ba",
+      "End": "9394a2bf23cf4817ae0ff3037a629f18",
+      "Id": "c138331d14fa48398ba2c2218fe153e9",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "3489d678df4b4a60a87ad2fe127ccf7b",
+      "End": "e96a14321e4a4e9fa523e426d5f2917c",
+      "Id": "c10e3bbf4aaa4dda81ce1d92ee047836",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "517cfa7631494edaac17b5b937f4b69a",
+      "End": "cc85a98a99fc4ffcab2c76c1265a6a2c",
+      "Id": "ee152d6697014f8ca973876ced0d5b3a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "220e62ca63444eceb253ccfd34b16172",
+      "End": "ab380bcc1f464dc2bc1a2ca111540b5b",
+      "Id": "21cb794e214b4ad08a0c26cd6e69cd55",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景预览(_B)",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "dcdd4fb05fc24f9ea45ea2985ebab109",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -63.306269373323516,
+        "Y": 5.4395846604890039
+      },
+      {
+        "Id": "e8624747805740bdaa7d6a73d959f7d4",
+        "Name": "Input",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -569.30626937332352,
+        "Y": 212.439584660489
+      },
+      {
+        "Id": "1b071ee0fd1a4846b8feef2e6f69453e",
+        "Name": "Input",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -569.30626937332352,
+        "Y": -133.560415339511
+      },
+      {
+        "Id": "d105341524444d1e8df1d8590e62bdd7",
+        "Name": "Input",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -569.30626937332352,
+        "Y": 39.439584660489004
+      },
+      {
+        "Id": "c264264031844ab0896e037c8d731d20",
+        "Name": "Output",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 210.69373062667648,
+        "Y": 5.4395846604890039
+      }
+    ],
+    "Annotations": [],
+    "X": 750.60721205913626,
+    "Y": 315.86328555709679,
+    "Zoom": 0.83273793691306564
+  }
+}
