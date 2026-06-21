@@ -1,0 +1,273 @@
+{
+  "Uuid": "371ad9bc-58ce-4400-a7db-41d0be37988a",
+  "IsCustomNode": true,
+  "Category": "ArchAI.Specs",
+  "Description": "Leverage local custom spec library to constrain AI for precise, specification-compliant outputs | 依托本地自定义规范知识库，约束 AI 输出精准合规的专业结果",
+  "Name": "SpecQuery",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "ElementResolver": null,
+      "Symbol": "// AI-Generated Result\r\n// 返回 AI 生成的结果\r\nMarkdown;",
+      "Id": "194e1f4a9e694789a71726b750de1bc1",
+      "NodeType": "OutputNode",
+      "Inputs": [
+        {
+          "Id": "b534fbe8c8fe45e88ad666002ab02df2",
+          "Name": "",
+          "Description": "输出数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "函数输出，请使用自定义节点"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "Parameter": {
+        "Name": "api_key",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": null,
+        "Description": " API Keys, Default to DeepSeek\n API 密钥，默认为 DeepSeek 模型"
+      },
+      "Id": "825566cf28e441ca98052fd7a1d26a0a",
+      "NodeType": "InputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "d4f99593f3e843f988420b71a841bb87",
+          "Name": "",
+          "Description": "输入数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "函数参数，用于自定义节点。\r\n\r\n可以指定参数的类型和默认值。例如: \r\n\r\n输入: 变量 []... []\r\n值: bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "Parameter": {
+        "Name": "user_query",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": null,
+        "Description": " Specification Query Prompt\n 规范查询指令"
+      },
+      "Id": "6f6ac5f39dcc40d2bb908670b3aec209",
+      "NodeType": "InputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "119878e555e045a28c9dce39a7fc7766",
+          "Name": "",
+          "Description": "输入数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "函数参数，用于自定义节点。\r\n\r\n可以指定参数的类型和默认值。例如: \r\n\r\n输入: 变量 []... []\r\n值: bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "Parameter": {
+        "Name": "spec_name",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": null,
+        "Description": " Specify Local Specification\n 指定调用的本地规范名称"
+      },
+      "Id": "0c7c37129aae4db288dd57c34b18a549",
+      "NodeType": "InputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "ec11e417041949848fb2b1ac8dadc892",
+          "Name": "",
+          "Description": "输入数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "函数参数，用于自定义节点。\r\n\r\n可以指定参数的类型和默认值。例如: \r\n\r\n输入: 变量 []... []\r\n值: bool = false"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys\r\nimport os\r\n\r\n# 必须和Packages下的包文件夹名完全一致（大小写敏感）\r\nPACKAGE_NAME = \"ArchAI\"\r\nOUT = \"\"  # 初始化OUT，避免未定义\r\n\r\n# ===================== 1. 自动定位节点包的根路径 =====================\r\n# 获取APPDATA路径\r\nappdata = os.environ.get(\"APPDATA\")\r\n# 定位Dynamo Revit根目录\r\ndynamo_root = os.path.join(appdata, \"Dynamo\", \"Dynamo Revit\")\r\nif not os.path.isdir(dynamo_root):\r\n    print(f\"Dynamo根目录不存在 - {dynamo_root}\")\r\n# 遍历版本目录，查找包路径\r\nlib_path = None\r\ntry:\r\n    for version_dir in os.listdir(dynamo_root):\r\n        version_path = os.path.join(dynamo_root, version_dir)\r\n        # 跳过非目录\r\n        if not os.path.isdir(version_path):\r\n            continue\r\n        temp_lib = os.path.join(version_path, \"Packages\", PACKAGE_NAME)\r\n        # 找到第一个有效路径就停止\r\n        if os.path.exists(temp_lib):\r\n            lib_path = temp_lib\r\n            break\r\nexcept OSError as e:\r\n    print(f\"遍历目录时出错：{str(e)}\")\r\n\r\ndef get_package_lib_path():\r\n    if lib_path not in sys.path:\r\n        sys.path.append(lib_path)\r\n    return lib_path, f\"lib路径：{lib_path}\" if lib_path else \"未找到包的节点包目录\"\r\n\r\n# 初始化路径\r\nget_package_lib_path()\r\n\r\n# 将 ./extra/lib 第三方模块也加入系统路径\r\nmodule_path = os.path.join(lib_path, \"extra\", \"lib\")\r\nif module_path not in sys.path:\r\n        sys.path.append(module_path)\r\n\r\n# ============================== 2. 调用deepseek 主程序 ==============================\r\napi_key = IN[0].strip() if (len(IN) > 0 and IN[0] and isinstance(IN[0], str)) else \"\"\r\nuser_query = IN[1].strip() if (len(IN) > 1 and IN[1] and isinstance(IN[1], str)) else \"\"\r\nspec_name = IN[2].strip() if (len(IN) > 2 and IN[2] and isinstance(IN[2], str)) else \"\"\r\n\r\nif not api_key:\r\n    OUT = \"IN[0] 需要有效的API Key字符串\"\r\nelif not user_query:\r\n    OUT = \"IN[1] 需要有效的问题字符串\"\r\nelif not spec_name:\r\n    OUT = \"IN[2] 需要有效的规范名称\"\r\n\r\n\r\n# 使用tools中模块\r\nfrom openai import OpenAI\r\nfrom specification.tools.spec_loader import spec_query_question, spec_query_system\r\nfrom revit_mcp_tools.config import BASE_URL, MODEL\r\nfrom revit_mcp_tools.mcp_handler import clean_think_content\r\n\r\nspec_user_query = spec_query_question(user_query, spec_name)\r\nsystem_message = spec_query_system(spec_name)\r\ntry:\r\n    client = OpenAI(api_key=api_key, base_url= BASE_URL)\r\n    response = client.chat.completions.create(\r\n        model= MODEL,\r\n        messages=[{\"role\":\"system\",\"content\":system_message},{\"role\":\"user\",\"content\":spec_user_query}],\r\n        stream=False\r\n    )\r\n    raw_result = response.choices[0].message.content\r\n    OUT = clean_think_content(raw_result)\r\nexcept Exception as e:\r\n    OUT = f\"API 调用失败：{str(e)}\"\r\n    print(OUT)\r\n\r\n# 最终输出（确保OUT始终有值）\r\nprint(f\"最终结果：{OUT}\")\r\n\r\n",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "007b14aac6314d0cba1266f20d24b60b",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "d150772d338a4ce18667723aeb3f19a8",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "36113c0794c146338349947100b0786e",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "26c90f8dc5fc42eebff0b61f2f4db8d1",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "29204e62aa8e4d9dbfe10af710454075",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "d4f99593f3e843f988420b71a841bb87",
+      "End": "d150772d338a4ce18667723aeb3f19a8",
+      "Id": "f3e5f91f2a8346998849e1358b775408",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "119878e555e045a28c9dce39a7fc7766",
+      "End": "36113c0794c146338349947100b0786e",
+      "Id": "5585cb9de3b74fbda4f2ccf290f102c6",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "ec11e417041949848fb2b1ac8dadc892",
+      "End": "26c90f8dc5fc42eebff0b61f2f4db8d1",
+      "Id": "d7a69c8b306647e38fc852d578427179",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "29204e62aa8e4d9dbfe10af710454075",
+      "End": "b534fbe8c8fe45e88ad666002ab02df2",
+      "Id": "2a3dfe79898b47b79582b0511997aad0",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景预览(_B)",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "194e1f4a9e694789a71726b750de1bc1",
+        "Name": "Output",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 353.5,
+        "Y": -6.5
+      },
+      {
+        "Id": "825566cf28e441ca98052fd7a1d26a0a",
+        "Name": "Input",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -291.5,
+        "Y": -129.5
+      },
+      {
+        "Id": "6f6ac5f39dcc40d2bb908670b3aec209",
+        "Name": "Input",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -291.5,
+        "Y": 27.5
+      },
+      {
+        "Id": "0c7c37129aae4db288dd57c34b18a549",
+        "Name": "Input",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -291.5,
+        "Y": 184.5
+      },
+      {
+        "Id": "007b14aac6314d0cba1266f20d24b60b",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 79.5,
+        "Y": -6.5
+      }
+    ],
+    "Annotations": [],
+    "X": 604.94050395821466,
+    "Y": 354.29186162428846,
+    "Zoom": 1.0792537289518347
+  }
+}

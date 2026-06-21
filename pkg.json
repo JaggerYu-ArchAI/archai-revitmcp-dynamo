@@ -1,0 +1,29 @@
+{
+  "license": "MIT",
+  "file_hash": null,
+  "name": "ArchAI",
+  "version": "1.0.0",
+  "author": "Jagger Yu",
+  "description": "RevitMCP-based Dynamo custom nodes for architectual design and BIM automation",
+  "group": "Revit AI Tools",
+  "keywords": [
+    "archai",
+    "revit",
+    "dynamo",
+    "ai",
+    "agent",
+    "mcp",
+    "deepseek",
+    "llm"
+  ],
+  "dependencies": [],
+  "contents": "",
+  "engine_version": "2.X",
+  "engine": "dynamo",
+  "engine_metadata": "",
+  "site_url": "",
+  "repository_url": "",
+  "contains_binaries": true,
+  "node_libraries": [
+  ]
+}

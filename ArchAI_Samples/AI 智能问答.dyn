@@ -1,0 +1,271 @@
+{
+  "Uuid": "dd807901-326f-4526-8ee8-ce9fcae8f25e",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "AI 智能问答",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [
+    {
+      "Id": "73a2b0f938ff46d6bfad4ad5d701a872",
+      "Name": "你的问题",
+      "Type": "string",
+      "Type2": "string",
+      "Value": "你好",
+      "Description": "创建字符串。",
+      "SelectedIndex": 0
+    }
+  ],
+  "Outputs": [
+    {
+      "Id": "e5c01518ae194e079a58719abcfa0d13",
+      "Name": "答复",
+      "Type": "string",
+      "InitialValue": "你好！有什么我可以帮助你的吗？😊",
+      "Description": "显示节点的输出内容"
+    }
+  ],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Function, DynamoCore",
+      "FunctionSignature": "c16e0e79-72b9-4dbc-b00e-1b75c6fc2a46",
+      "FunctionType": "Graph",
+      "Id": "33e7d4b87cc54fa78498c4ad1778cba0",
+      "NodeType": "FunctionNode",
+      "Inputs": [
+        {
+          "Id": "842fbd21cc42492f801682fb5ef63e6c",
+          "Name": "api_key",
+          "Description": " API Keys, Default to DeepSeek\n API 密钥，默认为 DeepSeek 模型\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "744db806ab164b7691e5ca2738d842d1",
+          "Name": "user_query",
+          "Description": " Query Prompt\n 查询指令\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "40ae67a2a15c41798ea06f73265db144",
+          "Name": "Markdown",
+          "Description": " AI-Generated Result\n 返回 AI 生成的结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Lightweight AI Q&A node for real-time natural language consultation | 轻量 AI 智能问答节点，支持自然语言即时对话答疑"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "73a2b0f938ff46d6bfad4ad5d701a872",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "9ec3ad1f35c345309f3911f06ae1d1ae",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "创建字符串。",
+      "InputValue": "你好"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 200.0,
+      "WatchHeight": 200.0,
+      "Id": "e5c01518ae194e079a58719abcfa0d13",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "e45b5a1f25b84f10bca8d1f9513d4aae",
+          "Name": "",
+          "Description": "要显示其输出的节点",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "45382035e0b84314896de91174cbccf9",
+          "Name": "",
+          "Description": "节点输出",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "显示节点的输出内容"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys\r\nimport os\r\nimport json\r\nimport traceback\r\n\r\n# 必须和Packages下的包文件夹名完全一致（大小写敏感）\r\nPACKAGE_NAME = \"ArchAI\"\r\nOUT = \"\"  # 初始化OUT，避免未定义\r\n\r\n# ===================== 1. 自动定位节点包的根路径 =====================\r\n# 获取APPDATA路径\r\nappdata = os.environ.get(\"APPDATA\")\r\n# 定位Dynamo Revit根目录\r\ndynamo_root = os.path.join(appdata, \"Dynamo\", \"Dynamo Revit\")\r\nif not os.path.isdir(dynamo_root):\r\n    print(f\"Dynamo根目录不存在 - {dynamo_root}\")\r\n# 遍历版本目录，查找包路径\r\nlib_path = None\r\ntry:\r\n    for version_dir in os.listdir(dynamo_root):\r\n        version_path = os.path.join(dynamo_root, version_dir)\r\n        # 跳过非目录\r\n        if not os.path.isdir(version_path):\r\n            continue\r\n        temp_lib = os.path.join(version_path, \"Packages\", PACKAGE_NAME)\r\n        # 找到第一个有效路径就停止\r\n        if os.path.exists(temp_lib):\r\n            lib_path = temp_lib\r\n            break\r\nexcept OSError as e:\r\n    print(f\"遍历目录时出错：{str(e)}\")\r\n\r\ndef get_package_lib_path():\r\n    if lib_path not in sys.path:\r\n        sys.path.append(lib_path)\r\n    return lib_path, f\"lib路径：{lib_path}\" if lib_path else \"未找到包的节点包目录\"\r\n\r\n# 初始化路径\r\nget_package_lib_path()\r\n\r\n\r\n\r\n# ===================== 读取API Key核心逻辑 =====================\r\n# 1. 拼接文件夹 + 密钥文件路径（固定文件名为 api_key.txt，可自行修改）\r\nlib_path, path_msg = get_package_lib_path()\r\n\r\n# 你的原有逻辑：获取库路径\r\nlib_path, path_msg = get_package_lib_path()\r\n\r\n# ===================== 读取API Key核心逻辑 =====================\r\n# 1. 拼接文件夹 + 密钥文件路径（固定文件名为 api_key.txt，可自行修改）\r\napi_key_folder = os.path.join(lib_path, \"ArchAI_Samples\")\r\napi_key_file = os.path.join(api_key_folder, \"api_key.txt\")\r\n\r\n# 初始化api_key变量\r\napi_key = None\r\n\r\ntry:\r\n    # 2. 自动创建文件夹（不存在则创建，防止报错）\r\n    if not os.path.exists(api_key_folder):\r\n        os.makedirs(api_key_folder)\r\n        print(f\"已创建文件夹：{api_key_folder}\")\r\n\r\n    # 3. 读取txt文件中的API Key（自动去除空格/换行符）\r\n    with open(api_key_file, \"r\", encoding=\"utf-8\") as f:\r\n        api_key = f.read().strip()  # strip() 清除首尾空白、换行\r\n        OUT = api_key\r\n\r\n    # 4. 校验密钥是否为空\r\n    if not api_key:\r\n        print(f\"错误：{api_key_file} 文件内容为空，请填写API Key\")\r\n    else:\r\n        print(f\"成功读取API Key：{api_key[:4]}****\")  # 脱敏打印，安全\r\n\r\n# 捕获所有异常（文件不存在、权限不足、读取失败等）\r\nexcept Exception as e:\r\n    error_info = traceback.format_exc()\r\n    print(f\"读取API Key失败：{str(e)}\")\r\n    print(f\"详细错误：{error_info}\")\r\n    print(f\"请检查文件是否存在：{api_key_file}\")\r\n    \r\n\r\n\r\n\r\n\r\n\r\n",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "56b5aa110f754320884c9a1a9fe0abd4",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "0e8ca1b50d4246f99560a96058c0c475",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "40ae67a2a15c41798ea06f73265db144",
+      "End": "e45b5a1f25b84f10bca8d1f9513d4aae",
+      "Id": "69a1e7c35bce49c38cb76068b4836743",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "9ec3ad1f35c345309f3911f06ae1d1ae",
+      "End": "744db806ab164b7691e5ca2738d842d1",
+      "Id": "85942850449240d3a30826d63668a2a3",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "0e8ca1b50d4246f99560a96058c0c475",
+      "End": "842fbd21cc42492f801682fb5ef63e6c",
+      "Id": "df11833bea2c4d90b10e28a0d338773e",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [
+    "c16e0e79-72b9-4dbc-b00e-1b75c6fc2a46"
+  ],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "ArchAI",
+      "Version": "1.0.0",
+      "ReferenceType": "Package",
+      "Nodes": [
+        "33e7d4b87cc54fa78498c4ad1778cba0"
+      ]
+    }
+  ],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "特性",
+      "Version": "2.19",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "6.1",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "无",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景预览(_B)",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "33e7d4b87cc54fa78498c4ad1778cba0",
+        "Name": "AIChat",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 421.83485180995672,
+        "Y": 244.82858013471844
+      },
+      {
+        "Id": "73a2b0f938ff46d6bfad4ad5d701a872",
+        "Name": "你的问题",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 193.52452110702973,
+        "Y": 377.83530075920271
+      },
+      {
+        "Id": "e5c01518ae194e079a58719abcfa0d13",
+        "Name": "答复",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 770.132924388899,
+        "Y": 234.95182913271663
+      },
+      {
+        "Id": "56b5aa110f754320884c9a1a9fe0abd4",
+        "Name": "读取api_key",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 177.45058236281523,
+        "Y": 234.65576021795601
+      }
+    ],
+    "Annotations": [],
+    "X": 89.15874833932088,
+    "Y": -3.2792129890763135,
+    "Zoom": 0.76582939285155183
+  }
+}

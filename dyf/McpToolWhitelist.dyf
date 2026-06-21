@@ -1,0 +1,119 @@
+{
+  "Uuid": "e3e35548-0261-49be-b5fb-973ec8b099cc",
+  "IsCustomNode": true,
+  "Category": "ArchAI.Common",
+  "Description": "Returns whitelisted  MCP tools invoked by AI | 返回 AI 调用的MCP 白名单工具",
+  "Name": "MCPToolWhitelist",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys\r\nimport os\r\n\r\n# 必须和Packages下的包文件夹名完全一致（大小写敏感）\r\nPACKAGE_NAME = \"ArchAI\"\r\nOUT = \"\"  # 初始化OUT，避免未定义\r\n\r\n# ===================== 1. 自动定位节点包的根路径 =====================\r\n# 获取APPDATA路径\r\nappdata = os.environ.get(\"APPDATA\")\r\n# 定位Dynamo Revit根目录\r\ndynamo_root = os.path.join(appdata, \"Dynamo\", \"Dynamo Revit\")\r\nif not os.path.isdir(dynamo_root):\r\n    print(f\"Dynamo根目录不存在 - {dynamo_root}\")\r\n# 遍历版本目录，查找包路径\r\nlib_path = None\r\ntry:\r\n    for version_dir in os.listdir(dynamo_root):\r\n        version_path = os.path.join(dynamo_root, version_dir)\r\n        # 跳过非目录\r\n        if not os.path.isdir(version_path):\r\n            continue\r\n        temp_lib = os.path.join(version_path, \"Packages\", PACKAGE_NAME)\r\n        # 找到第一个有效路径就停止\r\n        if os.path.exists(temp_lib):\r\n            lib_path = temp_lib\r\n            break\r\nexcept OSError as e:\r\n    print(f\"遍历目录时出错：{str(e)}\")\r\n\r\ndef get_package_lib_path():\r\n    if lib_path not in sys.path:\r\n        sys.path.append(lib_path)\r\n    return lib_path, f\"lib路径：{lib_path}\" if lib_path else \"未找到包的节点包目录\"\r\n\r\n# 初始化路径\r\nget_package_lib_path()\r\n\r\n# ================================2. 获取工具白名===========================\r\n# MCP通用建筑建模主入口 - 生成100%宽度无空白的MD表格工具列表\r\nfrom revit_mcp_tools.config import MCP_TOOL_WHITELIST\r\n\r\n# 统计工具总数\r\ntotal_tool_count = len(MCP_TOOL_WHITELIST)\r\n\r\ndef format_params(param_dict):\r\n    \"\"\"格式化参数字典为表格友好的字符串\"\"\"\r\n    if not param_dict:\r\n        return \"无\"\r\n    return \"<br>\".join([f\"{k}：{v}\" for k, v in param_dict.items()])\r\n\r\n# 初始化MD文本\r\nmd_content = f\"\"\"# MCP建筑建模工具白名单\r\n作者：非天生建筑师\r\n\r\n> 本工具白名单为MCP通用建筑建模核心功能集\r\n> 仅支持标准Revit原生构件操作，无额外插件依赖、无冗余流程\r\n> 支持AI**多轮连续问询**，自带**上下文记忆缓存**\r\n> 可自动继承上一轮执行结果，分步拆解复杂建模任务\r\n> 共计：**{total_tool_count} 个**专业建模工具\r\n\"\"\"\r\n\r\n# ==================================================\r\n# 【✅ 100% 精准匹配你白名单的最终索引】\r\n# ==================================================\r\nmodules = [\r\n    (\"第一模块：选择查询工具\",            0,  4),   # 0-3   共4个 ✔️\r\n    (\"第二模块：建筑方案设计工具\",        4,  6),   # 4-5   共2个 ✔️\r\n    (\"第三模块：常用构件创建工具\",        6, 12),   # 6-11  共6个 ✔️\r\n    (\"第四模块：常用构件修改工具\",       12, 19),   # 12-18 共7个 ✔️\r\n    (\"第五模块：消防疏散路径工具\",       19, 21),   # 19-20 共2个 ✔️\r\n    (\"第六模块：房间优化工具\",           21, 23),   # 21-22 共2个 ✔️\r\n    (\"第七模块：构件标记工具\",           23, 27),   # 23-26 共4个 ✔️\r\n    (\"第八模块：轴网管理工具\",           27, 32),   # 27-31 共5个 ✔️\r\n    (\"第九模块：视图管理工具\",           32, 36),   # 32-35 共4个 ✔️\r\n    (\"第十模块：模型检查工具\",           36, 40),   # 36-39 共4个 ✔️\r\n]\r\n\r\n# 遍历每个模块生成100%宽度无空白表格\r\nfor module_name, start_idx, end_idx in modules:\r\n    # 模块标题\r\n    md_content += f\"## {module_name}\\n\\n\"\r\n    # HTML表格：100%宽度，精准分配列宽，彻底解决右侧空白\r\n    md_content += \"\"\"\r\n<table width=\"100%\">\r\n  <thead>\r\n    <tr>\r\n      <th width=\"5%\" align=\"center\">序号</th>\r\n      <th width=\"15%\" align=\"left\">工具名称</th>\r\n      <th width=\"30%\" align=\"left\">功能描述</th>\r\n      <th width=\"35%\" align=\"left\">必填参数</th>\r\n      <th width=\"15%\" align=\"left\">可选参数</th>\r\n    </tr>\r\n  </thead>\r\n  <tbody>\r\n\"\"\"\r\n    # 遍历模块内工具生成表格行\r\n    for idx, tool in enumerate(MCP_TOOL_WHITELIST[start_idx:end_idx], 1):\r\n        tool_name = tool[\"tool_name\"]\r\n        desc = tool[\"description\"]\r\n        req = format_params(tool[\"required_params\"])\r\n        opt = format_params(tool[\"optional_params\"])\r\n        # 表格行\r\n        md_content += f\"\"\"\r\n    <tr>\r\n      <td align=\"center\">{idx}</td>\r\n      <td align=\"left\">{tool_name}</td>\r\n      <td align=\"left\">{desc}</td>\r\n      <td align=\"left\">{req}</td>\r\n      <td align=\"left\">{opt}</td>\r\n    </tr>\r\n\"\"\"\r\n    # 表格闭合+模块分割线\r\n    md_content += \"\"\"\r\n  </tbody>\r\n</table>\r\n\r\n<hr>\r\n\r\n\"\"\"\r\n\r\n# 最终输出（去除首尾多余空白）\r\nOUT = md_content.strip()",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "50505a6730264ec185206407b9f32cb4",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "c77af9aad2db4bae80aac0db275f0458",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "ElementResolver": null,
+      "Symbol": "// List of MCP Tool Whitelist\r\n// 返回 MCP 工具白名单\r\nMarkdown",
+      "Id": "bae494a1ca684028916e5b1ec4f8546a",
+      "NodeType": "OutputNode",
+      "Inputs": [
+        {
+          "Id": "74eaaec851204ef1850f147d8730a651",
+          "Name": "",
+          "Description": "输出数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "函数输出，请使用自定义节点"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "c77af9aad2db4bae80aac0db275f0458",
+      "End": "74eaaec851204ef1850f147d8730a651",
+      "Id": "2a493de1b3da46c2b03a0ed84cb82e21",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景预览(_B)",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "50505a6730264ec185206407b9f32cb4",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 250.0,
+        "Y": -0.69319808731313515
+      },
+      {
+        "Id": "bae494a1ca684028916e5b1ec4f8546a",
+        "Name": "Output",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 466.9262681231628,
+        "Y": -0.64698940715581443
+      }
+    ],
+    "Annotations": [],
+    "X": -243.63244861475437,
+    "Y": 184.215436932305,
+    "Zoom": 1.4425890929331344
+  }
+}

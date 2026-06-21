@@ -1,0 +1,357 @@
+{
+  "Uuid": "e09cf731-4191-4056-b7b4-031020f67cde",
+  "IsCustomNode": true,
+  "Category": "ArchAI.Modeling",
+  "Description": "AI-driven random generation with uncertain outputs | AI 随机生成，输出具备不确定性",
+  "Name": "RandomGeneration",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "ElementResolver": null,
+      "Symbol": "// AI-Generated Result\r\n// 返回 AI 生成的结果\r\nResult",
+      "Id": "10acd158a087404d9f2345fd240ced34",
+      "NodeType": "OutputNode",
+      "Inputs": [
+        {
+          "Id": "f11005afa9914a17996f29fbcc8e6a51",
+          "Name": "",
+          "Description": "输出数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "函数输出，请使用自定义节点"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import re\r\n\r\ndef clean_script_string(raw):\r\n    # 去除首尾空白以便检查标记（但不影响最终输出）\r\n    stripped = raw.strip()\r\n    \r\n    # 检查是否包含开头标记（[ 或 ```python）或结尾标记（] 或 ```）\r\n    has_prefix = stripped.startswith('[') or stripped.startswith('```python')\r\n    has_suffix = stripped.endswith(']') or stripped.endswith('```')\r\n    \r\n    if has_prefix or has_suffix:\r\n        # 第一部分：匹配开头的存在包裹标记\r\n        # ^:匹配字符串的开头\r\n        # \\s*:匹配开头的任意数量空白字符（包括换行）\r\n        # (\\[\\s*)?:可选地匹配 [ 及其后面的空白字符\r\n        # ```python：匹配markdown代码块的开头标记\r\n        # \\s*：匹配代码标记块的任意数量空白字符\r\n        # |：或者\r\n        # 第二部分：匹配结尾的包裹标记\r\n        # \\s*:匹配代码块结束标志前的任意数量空白字符\r\n        # ```：匹配markdown代码块的结束标记\r\n        # \\s*：匹配代码标记块结束后的任意数量空白字符\r\n        # (\\[\\s*)?：可选地匹配 ] 及其后面的空白字符\r\n        # $：匹配字符串的结尾\r\n        pattern = r'^\\s*(\\[\\s*)?```python\\s*|\\s*```\\s*(\\]\\s*)?$'\r\n        cleaned = re.sub(pattern, '', raw, flags=re.DOTALL)\r\n        return cleaned.strip()   # 清理后去除首尾空白，得到纯净代码\r\n    else:\r\n        # 没有检测到包裹标记，直接返回原始字符串（保留原格式，包括首尾空白）\r\n        return raw\r\n\r\nraw_str = IN[0]\r\nif raw_str is None or not isinstance(raw_str, str):\r\n    OUT = \"\"   # 输入无效时返回空字符串\r\nelse:\r\n    OUT = clean_script_string(raw_str)",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "2d69c603d7774f96a85fca1ffebcb7ae",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "9fc056f497804f93b8f1b634062b6086",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "f37c5748c4fc4672a444c13c806c5703",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys\r\nimport os\r\nimport json\r\n\r\n# 必须和Packages下的包文件夹名完全一致（大小写敏感）\r\nPACKAGE_NAME = \"ArchAI\"\r\nOUT = \"\"  # 初始化OUT，避免未定义\r\n\r\n# ===================== 1. 自动定位节点包的根路径 =====================\r\n# 获取APPDATA路径\r\nappdata = os.environ.get(\"APPDATA\")\r\n# 定位Dynamo Revit根目录\r\ndynamo_root = os.path.join(appdata, \"Dynamo\", \"Dynamo Revit\")\r\nif not os.path.isdir(dynamo_root):\r\n    print(f\"Dynamo根目录不存在 - {dynamo_root}\")\r\n# 遍历版本目录，查找包路径\r\nlib_path = None\r\ntry:\r\n    for version_dir in os.listdir(dynamo_root):\r\n        version_path = os.path.join(dynamo_root, version_dir)\r\n        # 跳过非目录\r\n        if not os.path.isdir(version_path):\r\n            continue\r\n        temp_lib = os.path.join(version_path, \"Packages\", PACKAGE_NAME)\r\n        # 找到第一个有效路径就停止\r\n        if os.path.exists(temp_lib):\r\n            lib_path = temp_lib\r\n            break\r\nexcept OSError as e:\r\n    print(f\"遍历目录时出错：{str(e)}\")\r\n\r\ndef get_package_lib_path():\r\n    if lib_path not in sys.path:\r\n        sys.path.append(lib_path)\r\n    return lib_path, f\"lib路径：{lib_path}\" if lib_path else \"未找到包的节点包目录\"\r\n\r\n# 初始化路径\r\nget_package_lib_path()\r\n\r\n# 将 ./extra/lib 第三方模块也加入系统路径\r\nmodule_path = os.path.join(lib_path, \"extra\", \"lib\")\r\nif module_path not in sys.path:\r\n        sys.path.append(module_path)\r\n\r\n\r\n# ===================== 2. 读取与验证输入（提前做，避免依赖加载后报错） =====================\r\n# 先验证输入，再加载依赖，减少异常\r\napi_key = IN[0].strip() if (len(IN) > 0 and IN[0] and isinstance(IN[0], str)) else \"\"\r\nuser_query = IN[1].strip() if (len(IN) > 1 and IN[1] and isinstance(IN[1], str)) else \"\"\r\n\r\n# 输入验证（失败直接返回，不加载依赖）\r\nif not api_key:\r\n    OUT = \"IN[0] 需要有效的API Key字符串\"\r\nelif not user_query:\r\n    OUT = \"IN[1] 需要有效的问题字符串\"\r\nelse:\r\n    # ===================== 3. 加载路径+导入openai（仅在输入有效时执行） =====================\r\n    # 把元组的第1个元素赋值给lib_path，第2个赋值给path_msg\r\n    lib_path, path_msg = get_package_lib_path()\r\n    print(f\"【路径验证】{path_msg}\")\r\n\r\n    openai_loaded = False\r\n    # 清理缓存，避免加载旧版本\r\n    if \"openai\" in sys.modules.keys():\r\n        del sys.modules[\"openai\"]\r\n    # 核心：把导入逻辑完全放进try里，启动时不会触发\r\n    try:\r\n        # 从 ./extra/lib 中导入openai库；从 ./librevit_mcp_tools 导入配置\r\n        from openai import OpenAI\r\n        from revit_mcp_tools.config import BASE_URL, MODEL\r\n        from revit_mcp_tools.mcp_handler import clean_think_content\r\n        \r\n        print(\"openai导入成功\")\r\n        openai_loaded = True\r\n    except Exception as e:\r\n        OUT = f\"openai导入失败：{type(e).__name__} - {str(e)}\"\r\n        print(OUT)\r\n\r\n    # ===================== 4. 调用 DeepSeek API（仅在依赖加载成功时执行） =====================\r\n    # ========== 1. 定义本地文件路径（系统文档目录，100%有权限） ==========\r\n    USER_DOCS = os.path.expanduser(\"~\\\\Documents\\\\archai_data\")\r\n    os.makedirs(USER_DOCS, exist_ok=True)\r\n    HIS_FILE = os.path.join(USER_DOCS, \"ai_modeling_history.json\")\r\n    MAX_HISTORY = 10  # 最多保留10轮对话，避免token过长\r\n    \r\n    # ========== 2. 读取本地历史对话 ==========\r\n    chat_history = []\r\n    if os.path.exists(HIS_FILE):\r\n        try:\r\n            with open(HIS_FILE, \"r\", encoding=\"utf-8\") as f:\r\n                chat_history = json.load(f)\r\n        except:\r\n            # 文件损坏时重置为空\r\n            chat_history = []\r\n    \r\n    # ========== 3. 调用DeepSeek API（仅在依赖加载成功时执行） ==========\r\n    if openai_loaded:\r\n        system_message = f\"\"\"\r\n你是专业的Revit Dynamo PythonScript（Cpython）代码生成助手，仅输出可运行的纯代码，不包含任何解释、说明文字或额外文本。绝对遵循以下内容：\r\n=====【强制核心指令 必严格执行】=====\r\n1. 务必通读全部历史对话记录，牢牢记住用户**最初原始业务需求**，全程不可遗忘、不可偏离\r\n2. 区分用户输入类型：\r\n   - 用户发送全新需求：正常按规则生成对应完整代码\r\n   - 用户发送**代码运行报错、异常日志、错误信息**：禁止重新编写新需求，必须结合历史原始需求 + 报错内容排查问题，精准修正代码BUG\r\n3. 修复报错代码时，保留原有业务逻辑，严格沿用固定导入、事务写法、单位转换规则，只修改报错出错部分\r\n4. 无论全新生成还是报错修复，最终只输出完整可直接运行的Python代码，无任何多余文字\r\n=====【固定规则 全部遵守】=====\r\n【规则1】：禁止使用Pyrevit代码、ironpython、Revit MCP代码，严格使用原生Revit API，版本为Revit 2024。\r\n【规则2】：所有尺寸参数必须通过Revit API的UnitUtils.ConvertToInternalUnits方法将米（m）、毫米(mm)、厘米(cm)转换为英尺。\r\n【规则3】：为避免错误，必须使用以下的固定导入内容（自行去掉退格缩进），禁止自行导入其他内容：\r\n        import sys\r\n        import os\r\n        import math\r\n        import json\r\n        import clr\r\n        \r\n        import clr\r\n        clr.AddReference('ProtoGeometry')\r\n        from Autodesk.DesignScript.Geometry import *\r\n        clr.AddReference('DSCoreNodes')\r\n        import DSCore  # 为避免冲突，使用DSCore.List.XX\r\n        clr.AddReference('RevitNodes')\r\n        import Revit   # 为避免冲突，使用Revit.Elements.XX\r\n        clr.ImportExtensions(Revit.Elements)\r\n        clr.ImportExtensions(Revit.GeometryConversion)\r\n        \r\n        clr.AddReference('RevitAPI')\r\n        clr.AddReference('RevitAPIUI')\r\n        clr.AddReference(\"System.Collections\")\r\n        import System\r\n        from Autodesk.Revit.DB import *\r\n        from Autodesk.Revit.UI import *\r\n        from System.Collections.Generic import *\r\n        \r\n        clr.AddReference(\"RevitServices\")\r\n        import RevitServices\r\n        from RevitServices.Persistence import DocumentManager\r\n        from RevitServices.Transactions import TransactionManager\r\n        \r\n        doc = DocumentManager.Instance.CurrentDBDocument\r\n        app = doc.Application\r\n        uiApp = DocumentManager.Instance.CurrentUIApplication\r\n        uidoc = uiApp.ActiveUIDocument\r\n\r\n【规则4】：为避免错误，必须使用以下固定格式（自行去掉退格缩进），禁止自行修改：\r\n        固定导入内容\r\n        TransactionManager.Instance.EnsureInTransaction(doc)\r\n        你的代码\r\n        TransactionManager.Instance.TransactionTaskDone()\r\n【规则5】：参数不全时，使用OUT输出，直接向用户索要必填参数，不说多余的话。\r\n【规则6】：非Revit代码生成需求，直接拒绝。\r\n\"\"\"\r\n        try:\r\n            client = OpenAI(api_key=api_key, base_url=BASE_URL)\r\n            \r\n            # 把系统提示、历史对话、当前提问拼接起来\r\n            messages = [{\"role\": \"system\", \"content\": system_message}] + chat_history + [{\"role\": \"user\", \"content\": user_query}]\r\n            \r\n            response = client.chat.completions.create(\r\n                model=MODEL,\r\n                messages=messages,\r\n                stream=False\r\n            )\r\n            raw_result = response.choices[0].message.content\r\n            OUT = clean_think_content(raw_result)\r\n            \r\n            # ========== 4. 更新历史对话并写入本地文件 ==========\r\n            chat_history.append({\"role\": \"user\", \"content\": user_query})\r\n            chat_history.append({\"role\": \"assistant\", \"content\": OUT})\r\n            \r\n            # 裁剪历史，只保留最近10轮\r\n            if len(chat_history) > MAX_HISTORY * 2:\r\n                chat_history = chat_history[-(MAX_HISTORY * 2):]\r\n            \r\n            # 写入文件（必定生成）\r\n            with open(HIS_FILE, \"w\", encoding=\"utf-8\") as f:\r\n                json.dump(chat_history, f, ensure_ascii=False, indent=2)\r\n                \r\n        except Exception as e:\r\n            OUT = f\"API 调用失败: {str(e)}\"\r\n            print(OUT)\r\n    elif not openai_loaded and not OUT:\r\n        OUT = \"未加载到openai模块，无法调用API\"\r\n        print(OUT)\r\n    \r\n    # 最终输出（确保OUT始终有值）\r\n    # print(f\"最终结果: {OUT}\")\r\n    ",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "2b5ebf3971c942f597df93b29ea47902",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "c76a87f73f714be38c424697b07533cc",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "bb96f0a614c840a0ba2e1fb80dfb8ddf",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "f811d6ed87a84b70aec4352e7c86aad3",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "Parameter": {
+        "Name": "api_key",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": null,
+        "Description": " API Keys, Default to DeepSeek\n API 密钥，默认为 DeepSeek 模型"
+      },
+      "Id": "d674a72c53784cccb1a4ed305c5bb705",
+      "NodeType": "InputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "b171caf9a5db49a6915ef2fb21c1fe1b",
+          "Name": "",
+          "Description": "输入数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "函数参数，用于自定义节点。\r\n\r\n可以指定参数的类型和默认值。例如: \r\n\r\n输入: 变量 []... []\r\n值: bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "Parameter": {
+        "Name": "user_query",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": null,
+        "Description": " Query Prompt\n 查询指令"
+      },
+      "Id": "db63ca74a8b549908339faf8a977d93e",
+      "NodeType": "InputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "f622ba1802674899baf09dc932efd219",
+          "Name": "",
+          "Description": "输入数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "函数参数，用于自定义节点。\r\n\r\n可以指定参数的类型和默认值。例如: \r\n\r\n输入: 变量 []... []\r\n值: bool = false"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import traceback\r\n\r\ntry:\r\n    # 执行传入的Python代码字符串\r\n    namespace = {}\r\n    exec(IN[0], namespace)\r\n    # 执行成功：直接返回代码中的 OUT 结果\r\n    OUT = namespace.get(\"OUT\", \"执行成功（无返回值）\")\r\n\r\nexcept Exception:\r\n    # 执行失败：直接返回完整报错文本（纯字符串，无包装）\r\n    OUT = \"❌ 代码执行报错：\\n\" + traceback.format_exc()",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "5b18e518f430450a891926c099a72cea",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "9b0efe3a8bf24a5490dda6a9d769b791",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "7e09a5d997e74a4b91fc23135eafda97",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "ElementResolver": null,
+      "Symbol": "// AI-Generated Script\r\n// 返回 AI 生成的代码\r\nScript",
+      "Id": "d55733f76ea44f7a9df71b2097b1eb74",
+      "NodeType": "OutputNode",
+      "Inputs": [
+        {
+          "Id": "8d1a66938e9446a193982cfad3f59f19",
+          "Name": "",
+          "Description": "输出数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "函数输出，请使用自定义节点"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "f37c5748c4fc4672a444c13c806c5703",
+      "End": "9b0efe3a8bf24a5490dda6a9d769b791",
+      "Id": "8e8437e2ca0e4798aef4ed93ba7fbbf1",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f37c5748c4fc4672a444c13c806c5703",
+      "End": "8d1a66938e9446a193982cfad3f59f19",
+      "Id": "9759b2943c7849a0a665b7e8d1b3c8da",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f811d6ed87a84b70aec4352e7c86aad3",
+      "End": "9fc056f497804f93b8f1b634062b6086",
+      "Id": "527198eb94bf426898e0c6104993bdaf",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "b171caf9a5db49a6915ef2fb21c1fe1b",
+      "End": "c76a87f73f714be38c424697b07533cc",
+      "Id": "abfe8e85ad6c438c9b4d43e7e6e1873b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f622ba1802674899baf09dc932efd219",
+      "End": "bb96f0a614c840a0ba2e1fb80dfb8ddf",
+      "Id": "913ad20d5347485fbb4a439b03bf20a2",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "7e09a5d997e74a4b91fc23135eafda97",
+      "End": "f11005afa9914a17996f29fbcc8e6a51",
+      "Id": "d7978cf9ffd5496191df9cef9c0e2060",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景预览(_B)",
+      "EyeX": -2356.34521484375,
+      "EyeY": 2558.2900390625,
+      "EyeZ": 11356.8310546875,
+      "LookX": 2351.34521484375,
+      "LookY": -2547.2900390625,
+      "LookZ": -11364.8310546875,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "10acd158a087404d9f2345fd240ced34",
+        "Name": "Output",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 2031.3257378216158,
+        "Y": -154.2525213581923
+      },
+      {
+        "Id": "2d69c603d7774f96a85fca1ffebcb7ae",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1494.3257378216158,
+        "Y": -154.2525213581923
+      },
+      {
+        "Id": "2b5ebf3971c942f597df93b29ea47902",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1223.164389559045,
+        "Y": -158.97609818421145
+      },
+      {
+        "Id": "d674a72c53784cccb1a4ed305c5bb705",
+        "Name": "Input",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 776.3257378216158,
+        "Y": -224.2525213581923
+      },
+      {
+        "Id": "db63ca74a8b549908339faf8a977d93e",
+        "Name": "Input",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 776.3257378216158,
+        "Y": -50.2525213581923
+      },
+      {
+        "Id": "5b18e518f430450a891926c099a72cea",
+        "Name": "执行代码",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1768.3257378216158,
+        "Y": -140.21220154189345
+      },
+      {
+        "Id": "d55733f76ea44f7a9df71b2097b1eb74",
+        "Name": "Output",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 2029.6736123429637,
+        "Y": -349.2033278391566
+      }
+    ],
+    "Annotations": [],
+    "X": -1001.1622280143218,
+    "Y": 302.79893566959475,
+    "Zoom": 0.94920856635317907
+  }
+}

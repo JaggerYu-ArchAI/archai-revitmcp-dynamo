@@ -1,0 +1,381 @@
+{
+  "Uuid": "dd807901-326f-4526-8ee8-ce9fcae8f25e",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "AI 规范助手",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [
+    {
+      "Id": "73a2b0f938ff46d6bfad4ad5d701a872",
+      "Name": "你的问题",
+      "Type": "string",
+      "Type2": "string",
+      "Value": "",
+      "Description": "创建字符串。",
+      "SelectedIndex": 0
+    },
+    {
+      "Id": "3ba12e1deacb4b1893f9768b2a23d836",
+      "Name": "指定规范",
+      "Type": "string",
+      "Type2": "string",
+      "Value": "C:\\Users\\14020\\AppData\\Roaming\\Dynamo\\Dynamo Revit\\2.19\\packages\\ArchAI\\specification\\assets\\spec_files\\核电厂防火设计规范_GBT22158-2021.md",
+      "Description": "允许选择系统上某个文件以返回其文件路径",
+      "SelectedIndex": 0
+    }
+  ],
+  "Outputs": [
+    {
+      "Id": "e5c01518ae194e079a58719abcfa0d13",
+      "Name": "答复",
+      "Type": "unknown",
+      "InitialValue": "",
+      "Description": "显示节点的输出内容"
+    }
+  ],
+  "Nodes": [
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "73a2b0f938ff46d6bfad4ad5d701a872",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "9ec3ad1f35c345309f3911f06ae1d1ae",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "创建字符串。",
+      "InputValue": ""
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 420.0,
+      "WatchHeight": 38.0,
+      "Id": "e5c01518ae194e079a58719abcfa0d13",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "e45b5a1f25b84f10bca8d1f9513d4aae",
+          "Name": "",
+          "Description": "要显示其输出的节点",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "45382035e0b84314896de91174cbccf9",
+          "Name": "",
+          "Description": "节点输出",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "显示节点的输出内容"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Function, DynamoCore",
+      "FunctionSignature": "371ad9bc-58ce-4400-a7db-41d0be37988a",
+      "FunctionType": "Graph",
+      "Id": "aaefe1a1892c4097a0e2709e61dc2ecf",
+      "NodeType": "FunctionNode",
+      "Inputs": [
+        {
+          "Id": "5b7210cbe5974289ae1c6d9793132021",
+          "Name": "api_key",
+          "Description": " API Keys, Default to DeepSeek\n API 密钥，默认为 DeepSeek 模型\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "de25562b62eb4150932c6e3bb486daba",
+          "Name": "user_query",
+          "Description": " Specification Query Prompt\n 规范查询指令\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "d017fd7142564538beecac2af77ec4c6",
+          "Name": "spec_name",
+          "Description": " Specify Local Specification\n 指定调用的本地规范名称\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "3aaa444c64254c14b18953455c234701",
+          "Name": "Markdown",
+          "Description": " AI-Generated Result\n 返回 AI 生成的结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Leverage local custom spec library to constrain AI for precise, specification-compliant outputs | 依托本地自定义规范知识库，约束 AI 输出精准合规的专业结果"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.Filename, CoreNodeModels",
+      "Id": "3ba12e1deacb4b1893f9768b2a23d836",
+      "NodeType": "ExtensionNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "5f1445d8f35345d7af72c65cf66af7e2",
+          "Name": "",
+          "Description": "文件路径",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "允许选择系统上某个文件以返回其文件路径",
+      "HintPath": "C:\\Users\\14020\\AppData\\Roaming\\Dynamo\\Dynamo Revit\\2.19\\packages\\ArchAI\\specification\\assets\\spec_files\\核电厂防火设计规范_GBT22158-2021.md",
+      "InputValue": "C:\\Users\\14020\\AppData\\Roaming\\Dynamo\\Dynamo Revit\\2.19\\packages\\ArchAI\\specification\\assets\\spec_files\\核电厂防火设计规范_GBT22158-2021.md"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "Id": "c44057a241b8452cbe38ce30b026e754",
+      "NodeType": "FunctionNode",
+      "Inputs": [
+        {
+          "Id": "5da78adbd1e947d9b17a077576e2ee31",
+          "Name": "path",
+          "Description": "要获取其文件名的路径\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "627134e93ced4b89b80e50f3e08bebfc",
+          "Name": "withExtension",
+          "Description": "切换为在结果中包含扩展名\n\nbool\n默认值 : true",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "9d50af292a29461f8614331aab1972bd",
+          "Name": "string",
+          "Description": "文件路径中的文件名",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "FunctionSignature": "DSCore.IO.FileSystem.FileName@string,bool",
+      "Replication": "Auto",
+      "Description": "返回文件路径的文件名。\n\nFileSystem.FileName (path: string, withExtension: bool = true): string"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys\r\nimport os\r\nimport json\r\nimport traceback\r\n\r\n# 必须和Packages下的包文件夹名完全一致（大小写敏感）\r\nPACKAGE_NAME = \"ArchAI\"\r\nOUT = \"\"  # 初始化OUT，避免未定义\r\n\r\n# ===================== 1. 自动定位节点包的根路径 =====================\r\n# 获取APPDATA路径\r\nappdata = os.environ.get(\"APPDATA\")\r\n# 定位Dynamo Revit根目录\r\ndynamo_root = os.path.join(appdata, \"Dynamo\", \"Dynamo Revit\")\r\nif not os.path.isdir(dynamo_root):\r\n    print(f\"Dynamo根目录不存在 - {dynamo_root}\")\r\n# 遍历版本目录，查找包路径\r\nlib_path = None\r\ntry:\r\n    for version_dir in os.listdir(dynamo_root):\r\n        version_path = os.path.join(dynamo_root, version_dir)\r\n        # 跳过非目录\r\n        if not os.path.isdir(version_path):\r\n            continue\r\n        temp_lib = os.path.join(version_path, \"Packages\", PACKAGE_NAME)\r\n        # 找到第一个有效路径就停止\r\n        if os.path.exists(temp_lib):\r\n            lib_path = temp_lib\r\n            break\r\nexcept OSError as e:\r\n    print(f\"遍历目录时出错：{str(e)}\")\r\n\r\ndef get_package_lib_path():\r\n    if lib_path not in sys.path:\r\n        sys.path.append(lib_path)\r\n    return lib_path, f\"lib路径：{lib_path}\" if lib_path else \"未找到包的节点包目录\"\r\n\r\n# 初始化路径\r\nget_package_lib_path()\r\n\r\n\r\n\r\n# ===================== 读取API Key核心逻辑 =====================\r\n# 1. 拼接文件夹 + 密钥文件路径（固定文件名为 api_key.txt，可自行修改）\r\nlib_path, path_msg = get_package_lib_path()\r\n\r\n# 你的原有逻辑：获取库路径\r\nlib_path, path_msg = get_package_lib_path()\r\n\r\n# ===================== 读取API Key核心逻辑 =====================\r\n# 1. 拼接文件夹 + 密钥文件路径（固定文件名为 api_key.txt，可自行修改）\r\napi_key_folder = os.path.join(lib_path, \"ArchAI_Samples\")\r\napi_key_file = os.path.join(api_key_folder, \"api_key.txt\")\r\n\r\n# 初始化api_key变量\r\napi_key = None\r\n\r\ntry:\r\n    # 2. 自动创建文件夹（不存在则创建，防止报错）\r\n    if not os.path.exists(api_key_folder):\r\n        os.makedirs(api_key_folder)\r\n        print(f\"已创建文件夹：{api_key_folder}\")\r\n\r\n    # 3. 读取txt文件中的API Key（自动去除空格/换行符）\r\n    with open(api_key_file, \"r\", encoding=\"utf-8\") as f:\r\n        api_key = f.read().strip()  # strip() 清除首尾空白、换行\r\n        OUT = api_key\r\n\r\n    # 4. 校验密钥是否为空\r\n    if not api_key:\r\n        print(f\"错误：{api_key_file} 文件内容为空，请填写API Key\")\r\n    else:\r\n        print(f\"成功读取API Key：{api_key[:4]}****\")  # 脱敏打印，安全\r\n\r\n# 捕获所有异常（文件不存在、权限不足、读取失败等）\r\nexcept Exception as e:\r\n    error_info = traceback.format_exc()\r\n    print(f\"读取API Key失败：{str(e)}\")\r\n    print(f\"详细错误：{error_info}\")\r\n    print(f\"请检查文件是否存在：{api_key_file}\")\r\n    \r\n\r\n\r\n\r\n\r\n\r\n",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "e4843de2dd6044e780f6d131645de011",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "d1b7f07a0dec422ab28a4e3a7b8bb00e",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "9ec3ad1f35c345309f3911f06ae1d1ae",
+      "End": "de25562b62eb4150932c6e3bb486daba",
+      "Id": "3929cc3dc29948f799451a521e7531d6",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "3aaa444c64254c14b18953455c234701",
+      "End": "e45b5a1f25b84f10bca8d1f9513d4aae",
+      "Id": "c9cbc73927a1479c910a4415a93538f8",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "5f1445d8f35345d7af72c65cf66af7e2",
+      "End": "5da78adbd1e947d9b17a077576e2ee31",
+      "Id": "b84821ffae3c4af6b61ee39f54545069",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "9d50af292a29461f8614331aab1972bd",
+      "End": "d017fd7142564538beecac2af77ec4c6",
+      "Id": "b68be1dc12c34e6a8b0a5558761f8c03",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d1b7f07a0dec422ab28a4e3a7b8bb00e",
+      "End": "5b7210cbe5974289ae1c6d9793132021",
+      "Id": "9def0bf473f24e42b617b15d8c91fcf0",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [
+    "371ad9bc-58ce-4400-a7db-41d0be37988a"
+  ],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "ArchAI",
+      "Version": "1.0.0",
+      "ReferenceType": "Package",
+      "Nodes": [
+        "aaefe1a1892c4097a0e2709e61dc2ecf"
+      ]
+    }
+  ],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "特性",
+      "Version": "2.19",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "6.1",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "无",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景预览(_B)",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "73a2b0f938ff46d6bfad4ad5d701a872",
+        "Name": "你的问题",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 60.995895044011945,
+        "Y": 382.7783375271531
+      },
+      {
+        "Id": "e5c01518ae194e079a58719abcfa0d13",
+        "Name": "答复",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 939.07013715891412,
+        "Y": 270.86374110528061
+      },
+      {
+        "Id": "aaefe1a1892c4097a0e2709e61dc2ecf",
+        "Name": "SpecQuery",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 641.06800260149771,
+        "Y": 269.64024674733469
+      },
+      {
+        "Id": "3ba12e1deacb4b1893f9768b2a23d836",
+        "Name": "指定规范",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -351.12198605873311,
+        "Y": 529.59321477046763
+      },
+      {
+        "Id": "c44057a241b8452cbe38ce30b026e754",
+        "Name": "FileSystem.FileName",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 301.27258094460967,
+        "Y": 510.54126096023288
+      },
+      {
+        "Id": "e4843de2dd6044e780f6d131645de011",
+        "Name": "读取api_key",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 67.061283695687507,
+        "Y": 236.88352593210061
+      }
+    ],
+    "Annotations": [],
+    "X": -248.94323557996768,
+    "Y": -99.857819551466889,
+    "Zoom": 0.90501669885670755
+  }
+}

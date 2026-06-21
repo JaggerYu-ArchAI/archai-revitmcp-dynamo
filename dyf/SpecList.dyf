@@ -1,0 +1,119 @@
+{
+  "Uuid": "587da341-0640-4cad-875e-dcb6d68c73f5",
+  "IsCustomNode": true,
+  "Category": "ArchAI.Specs",
+  "Description": "List of Local Specification Library Names | 返回本地规范库名称列表",
+  "Name": "SpecList",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys\r\nimport os\r\n\r\n# 必须和Packages下的包文件夹名完全一致（大小写敏感）\r\nPACKAGE_NAME = \"ArchAI\"\r\nOUT = \"\"  # 初始化OUT，避免未定义\r\n\r\n# ===================== 1. 自动定位节点包的根路径 =====================\r\n# 获取APPDATA路径\r\nappdata = os.environ.get(\"APPDATA\")\r\n# 定位Dynamo Revit根目录\r\ndynamo_root = os.path.join(appdata, \"Dynamo\", \"Dynamo Revit\")\r\nif not os.path.isdir(dynamo_root):\r\n    print(f\"Dynamo根目录不存在 - {dynamo_root}\")\r\n# 遍历版本目录，查找包路径\r\nlib_path = None\r\ntry:\r\n    for version_dir in os.listdir(dynamo_root):\r\n        version_path = os.path.join(dynamo_root, version_dir)\r\n        # 跳过非目录\r\n        if not os.path.isdir(version_path):\r\n            continue\r\n        temp_lib = os.path.join(version_path, \"Packages\", PACKAGE_NAME)\r\n        # 找到第一个有效路径就停止\r\n        if os.path.exists(temp_lib):\r\n            lib_path = temp_lib\r\n            break\r\nexcept OSError as e:\r\n    print(f\"遍历目录时出错：{str(e)}\")\r\n\r\ndef get_package_lib_path():\r\n    if lib_path not in sys.path:\r\n        sys.path.append(lib_path)\r\n    return lib_path, f\"lib路径：{lib_path}\" if lib_path else \"未找到包的节点包目录\"\r\n\r\n# 初始化路径\r\nget_package_lib_path()\r\n\r\n# 将 ./extra/lib 第三方模块也加入系统路径\r\nmodule_path = os.path.join(lib_path, \"extra\", \"lib\")\r\nif module_path not in sys.path:\r\n        sys.path.append(module_path)\r\n\r\n\r\n# ================================2. 获取本地规范库===========================\r\nfrom specification.tools.spec_loader import get_all_spec_files\r\n\r\nspec_list = get_all_spec_files()\r\nOUT = spec_list",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "f32f9907eec44489bd2ee0f6847b4d22",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "27d4c2e4667344f0ba301c13cc607d55",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "ElementResolver": null,
+      "Symbol": "// List of Local Specification Library Names\r\n// 返回本地规范库名称列表\r\nSpecNameList",
+      "Id": "12a20db6d407478999494ac4e6f16db1",
+      "NodeType": "OutputNode",
+      "Inputs": [
+        {
+          "Id": "e4faa65dc9a24fbab45c1c61cb0b6039",
+          "Name": "",
+          "Description": "输出数据",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "函数输出，请使用自定义节点"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "27d4c2e4667344f0ba301c13cc607d55",
+      "End": "e4faa65dc9a24fbab45c1c61cb0b6039",
+      "Id": "410bb49f2517429d912f59d4d7f396d2",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景预览(_B)",
+      "EyeX": -2356.34521484375,
+      "EyeY": 2558.2900390625,
+      "EyeZ": 11356.8310546875,
+      "LookX": 2351.34521484375,
+      "LookY": -2547.2900390625,
+      "LookZ": -11364.8310546875,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "f32f9907eec44489bd2ee0f6847b4d22",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -137.0,
+        "Y": 0.0
+      },
+      {
+        "Id": "12a20db6d407478999494ac4e6f16db1",
+        "Name": "Output",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 126.1612151589419,
+        "Y": 0.0
+      }
+    ],
+    "Annotations": [],
+    "X": 349.86330205464242,
+    "Y": 243.39905728708558,
+    "Zoom": 1.4761802392636134
+  }
+}

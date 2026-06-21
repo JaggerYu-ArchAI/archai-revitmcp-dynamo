@@ -1,0 +1,334 @@
+{
+  "Uuid": "5d410a54-db56-4b7f-85c2-d3fe4a718cd8",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "AI 辅助建模",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [
+    {
+      "Id": "e4f0e163d7a34dd69ade0c5903261936",
+      "Name": "建模需求",
+      "Type": "string",
+      "Type2": "string",
+      "Value": "",
+      "Description": "创建字符串。",
+      "SelectedIndex": 0
+    }
+  ],
+  "Outputs": [
+    {
+      "Id": "5d5f0c7003b84598b6f40b4a8ec0c069",
+      "Name": "执行结果",
+      "Type": "unknown",
+      "InitialValue": "",
+      "Description": "显示节点的输出内容"
+    },
+    {
+      "Id": "fda7ad5d6ae2481d9fb6d22f9252e107",
+      "Name": "代码",
+      "Type": "unknown",
+      "InitialValue": "",
+      "Description": "显示节点的输出内容"
+    }
+  ],
+  "Nodes": [
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 95.0,
+      "WatchHeight": 38.0,
+      "Id": "5d5f0c7003b84598b6f40b4a8ec0c069",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "8db4ed0cbb3647d48ffcc0a83fd2f095",
+          "Name": "",
+          "Description": "要显示其输出的节点",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "0b02ff6adcd74a208f350b3bc1819ad0",
+          "Name": "",
+          "Description": "节点输出",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "显示节点的输出内容"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "e4f0e163d7a34dd69ade0c5903261936",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "30cc3718b6cf41c99dcc4b13a2393ad3",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "创建字符串。",
+      "InputValue": ""
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Function, DynamoCore",
+      "FunctionSignature": "e09cf731-4191-4056-b7b4-031020f67cde",
+      "FunctionType": "Graph",
+      "Id": "762fab0bd05f47e687628d2e12e341bc",
+      "NodeType": "FunctionNode",
+      "Inputs": [
+        {
+          "Id": "72fa111b487a490f97b8960ffad7a1e4",
+          "Name": "api_key",
+          "Description": " API Keys, Default to DeepSeek\n API 密钥，默认为 DeepSeek 模型\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f8d9bcabc7604744a08d0846ff697849",
+          "Name": "user_query",
+          "Description": " Query Prompt\n 查询指令\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "9e6650cee5ce4f13b411166f06e6f70c",
+          "Name": "Result",
+          "Description": " AI-Generated Result\n 返回 AI 生成的结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "61357ae1c4ca495199e02d9fb838bc93",
+          "Name": "Script",
+          "Description": " AI-Generated Script\n 返回 AI 生成的代码",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "AI-driven random generation with uncertain outputs | AI 随机生成，输出具备不确定性"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys\r\nimport os\r\nimport json\r\nimport traceback\r\n\r\n# 必须和Packages下的包文件夹名完全一致（大小写敏感）\r\nPACKAGE_NAME = \"ArchAI\"\r\nOUT = \"\"  # 初始化OUT，避免未定义\r\n\r\n# ===================== 1. 自动定位节点包的根路径 =====================\r\n# 获取APPDATA路径\r\nappdata = os.environ.get(\"APPDATA\")\r\n# 定位Dynamo Revit根目录\r\ndynamo_root = os.path.join(appdata, \"Dynamo\", \"Dynamo Revit\")\r\nif not os.path.isdir(dynamo_root):\r\n    print(f\"Dynamo根目录不存在 - {dynamo_root}\")\r\n# 遍历版本目录，查找包路径\r\nlib_path = None\r\ntry:\r\n    for version_dir in os.listdir(dynamo_root):\r\n        version_path = os.path.join(dynamo_root, version_dir)\r\n        # 跳过非目录\r\n        if not os.path.isdir(version_path):\r\n            continue\r\n        temp_lib = os.path.join(version_path, \"Packages\", PACKAGE_NAME)\r\n        # 找到第一个有效路径就停止\r\n        if os.path.exists(temp_lib):\r\n            lib_path = temp_lib\r\n            break\r\nexcept OSError as e:\r\n    print(f\"遍历目录时出错：{str(e)}\")\r\n\r\ndef get_package_lib_path():\r\n    if lib_path not in sys.path:\r\n        sys.path.append(lib_path)\r\n    return lib_path, f\"lib路径：{lib_path}\" if lib_path else \"未找到包的节点包目录\"\r\n\r\n# 初始化路径\r\nget_package_lib_path()\r\n\r\n\r\n\r\n# ===================== 读取API Key核心逻辑 =====================\r\n# 1. 拼接文件夹 + 密钥文件路径（固定文件名为 api_key.txt，可自行修改）\r\nlib_path, path_msg = get_package_lib_path()\r\n\r\n# 你的原有逻辑：获取库路径\r\nlib_path, path_msg = get_package_lib_path()\r\n\r\n# ===================== 读取API Key核心逻辑 =====================\r\n# 1. 拼接文件夹 + 密钥文件路径（固定文件名为 api_key.txt，可自行修改）\r\napi_key_folder = os.path.join(lib_path, \"ArchAI_Samples\")\r\napi_key_file = os.path.join(api_key_folder, \"api_key.txt\")\r\n\r\n# 初始化api_key变量\r\napi_key = None\r\n\r\ntry:\r\n    # 2. 自动创建文件夹（不存在则创建，防止报错）\r\n    if not os.path.exists(api_key_folder):\r\n        os.makedirs(api_key_folder)\r\n        print(f\"已创建文件夹：{api_key_folder}\")\r\n\r\n    # 3. 读取txt文件中的API Key（自动去除空格/换行符）\r\n    with open(api_key_file, \"r\", encoding=\"utf-8\") as f:\r\n        api_key = f.read().strip()  # strip() 清除首尾空白、换行\r\n        OUT = api_key\r\n\r\n    # 4. 校验密钥是否为空\r\n    if not api_key:\r\n        print(f\"错误：{api_key_file} 文件内容为空，请填写API Key\")\r\n    else:\r\n        print(f\"成功读取API Key：{api_key[:4]}****\")  # 脱敏打印，安全\r\n\r\n# 捕获所有异常（文件不存在、权限不足、读取失败等）\r\nexcept Exception as e:\r\n    error_info = traceback.format_exc()\r\n    print(f\"读取API Key失败：{str(e)}\")\r\n    print(f\"详细错误：{error_info}\")\r\n    print(f\"请检查文件是否存在：{api_key_file}\")\r\n    \r\n\r\n\r\n\r\n\r\n\r\n",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "714d6af69b444f6dba8ba023c0b458c1",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "370bef0547ba4762a1db7d8d83705c43",
+          "Name": "OUT",
+          "Description": "Python 脚本结果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "运行嵌入 Python 脚本。"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 420.0,
+      "WatchHeight": 38.0,
+      "Id": "fda7ad5d6ae2481d9fb6d22f9252e107",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "6b99f41d51684cc68dd5636a4f415ee4",
+          "Name": "",
+          "Description": "要显示其输出的节点",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "dcff7863abc04f5cafd865ebc5139cf7",
+          "Name": "",
+          "Description": "节点输出",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "显示节点的输出内容"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "30cc3718b6cf41c99dcc4b13a2393ad3",
+      "End": "f8d9bcabc7604744a08d0846ff697849",
+      "Id": "264aac738cdf4248a019507b7a844a6d",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "9e6650cee5ce4f13b411166f06e6f70c",
+      "End": "8db4ed0cbb3647d48ffcc0a83fd2f095",
+      "Id": "890157e3b6cd467a990db7983db94a2c",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "61357ae1c4ca495199e02d9fb838bc93",
+      "End": "6b99f41d51684cc68dd5636a4f415ee4",
+      "Id": "e13bd720cfed425fb51db88998e9064f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "370bef0547ba4762a1db7d8d83705c43",
+      "End": "72fa111b487a490f97b8960ffad7a1e4",
+      "Id": "2cb9e806b35649909848e152cb164dca",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [
+    "e09cf731-4191-4056-b7b4-031020f67cde"
+  ],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "ArchAI",
+      "Version": "1.0.0",
+      "ReferenceType": "Package",
+      "Nodes": [
+        "762fab0bd05f47e687628d2e12e341bc"
+      ]
+    }
+  ],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "特性",
+      "Version": "2.19",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "6.1",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "无",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景预览(_B)",
+      "EyeX": -2356.34521484375,
+      "EyeY": 2558.2900390625,
+      "EyeZ": 11356.8310546875,
+      "LookX": 2351.34521484375,
+      "LookY": -2547.2900390625,
+      "LookZ": -11364.8310546875,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "5d5f0c7003b84598b6f40b4a8ec0c069",
+        "Name": "执行结果",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 2155.9936826374342,
+        "Y": -234.63447448381018
+      },
+      {
+        "Id": "e4f0e163d7a34dd69ade0c5903261936",
+        "Name": "建模需求",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1569.3063813441979,
+        "Y": -99.72214606652426
+      },
+      {
+        "Id": "762fab0bd05f47e687628d2e12e341bc",
+        "Name": "RandomGeneration",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1851.9190593815388,
+        "Y": -212.17123558021524
+      },
+      {
+        "Id": "714d6af69b444f6dba8ba023c0b458c1",
+        "Name": "读取api_key",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1551.0076981259463,
+        "Y": -257.41581701188352
+      },
+      {
+        "Id": "fda7ad5d6ae2481d9fb6d22f9252e107",
+        "Name": "代码",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 2150.3785157054153,
+        "Y": -107.73170182017984
+      }
+    ],
+    "Annotations": [],
+    "X": -929.79363655665077,
+    "Y": 304.89369003322832,
+    "Zoom": 0.68873717592114336
+  }
+}
