@@ -87,7 +87,7 @@ ArchAI/
 ## 🚀 快速开始
 
 ### 安装要求
-- Revit 2021+
+- Revit 2024
 - Dynamo 2.17+
 - Python 3.9+
 
@@ -100,11 +100,11 @@ ArchAI/
 
 2. **配置API密钥**
    - 编辑 `ArchAI_Samples/api_key.txt` 文件
-   - 添加您的AI服务API密钥
+   - 填入您的 **DeepSeek API KEY**（默认使用DeepSeek大模型）
 
-3. **加载到Dynamo**
-   - 在Dynamo中打开任意示例文件（`.dyn`）
-   - 或导入 `dyf/` 目录下的节点
+3. **使用Dynamo播放器打开**
+   - 在Revit中打开Dynamo播放器
+   - 选择 `ArchAI_Samples/` 目录下的示例文件（`.dyn`）
 
 4. **运行示例**
    - 打开 `AI 智能问答.dyn` 示例
@@ -130,9 +130,9 @@ ArchAI/
 
 ## 🛠️ 技术栈
 
-- **平台**: Autodesk Revit + Dynamo
+- **平台**: Autodesk Revit 2024 + Dynamo
 - **语言**: Python 3.9
-- **AI框架**: OpenAI API / DeepSeek API
+- **AI框架**: DeepSeek API（默认）/ OpenAI API
 - **MCP**: Dynamo Machine Learning Compute Protocol
 
 ---
