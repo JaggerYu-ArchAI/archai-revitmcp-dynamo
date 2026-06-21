@@ -118,23 +118,7 @@ ArchAI/
 
 ---
 
-## 💡 使用示例
-
-### AI智能问答
-```
-输入: "如何设计一个符合消防规范的疏散通道？"
-输出: "根据GB50016-2014建筑设计防火规范，疏散通道宽度应满足..."
-```
-
-### AI辅助建模
-```
-输入: "生成一个10层办公楼的结构柱布局"
-输出: Revit结构柱构件集合
-```
-
----
-
-## 🛠️ 技术栈
+## ️ 技术栈
 
 - **平台**: Autodesk Revit 2024 + Dynamo
 - **语言**: Python 3.9
@@ -143,7 +127,33 @@ ArchAI/
 
 ---
 
-## 📜 许可证
+## � 发布 Release
+
+### 如何创建 GitHub Release
+
+1. **创建标签**
+   ```bash
+   git tag -a v1.0.0 -m "版本1.0.0发布"
+   git push origin v1.0.0
+   ```
+
+2. **上传 Release**
+   - 访问 GitHub 仓库页面
+   - 点击 "Releases" -> "Draft a new release"
+   - 选择刚才创建的标签
+   - 添加发布说明
+   - 上传打包好的项目文件（可选）
+   - 点击 "Publish release"
+
+### 打包项目
+```bash
+# 打包为 zip（排除 .git 和临时文件）
+git archive --format=zip --prefix=ArchAI/ HEAD -o ArchAI_v1.0.0.zip
+```
+
+---
+
+## �📜 许可证
 
 MIT License
 
