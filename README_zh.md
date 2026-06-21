@@ -122,32 +122,6 @@ ArchAI/
 
 ---
 
-## 📦 发布 Release
-
-### 如何创建 GitHub Release
-
-1. **创建标签**
-   ```bash
-   git tag -a v1.0.0 -m "版本1.0.0发布"
-   git push origin v1.0.0
-   ```
-
-2. **上传 Release**
-   - 访问 GitHub 仓库页面
-   - 点击 "Releases" -> "Draft a new release"
-   - 选择刚才创建的标签
-   - 添加发布说明
-   - 上传打包好的项目文件（可选）
-   - 点击 "Publish release"
-
-### 打包项目
-```bash
-# 打包为 zip（排除 .git 和临时文件）
-git archive --format=zip --prefix=ArchAI/ HEAD -o ArchAI_v1.0.0.zip
-```
-
----
-
 ## 📜 许可证
 
 MIT License
