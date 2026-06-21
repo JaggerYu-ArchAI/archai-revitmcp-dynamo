@@ -1,8 +1,14 @@
-# ArchAI - 基于Dynamo的Revit AI设计助手
+# ArchAI - Revit AI Design Assistant for Dynamo
 
 ![ArchAI Logo](https://img.shields.io/badge/ArchAI-AI%20for%20BIM-blue)
 
-> 基于Dynamo/Revit平台的AI设计助手，集成大语言模型能力，助力建筑信息模型智能化设计。
+> An AI-powered design assistant for Revit, integrated with large language models to enhance BIM workflows.
+
+---
+
+## 📖 中文介绍
+
+基于Dynamo/Revit平台的AI设计助手，集成大语言模型能力，助力建筑信息模型智能化设计。
 
 ---
 
