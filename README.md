@@ -129,32 +129,6 @@ ArchAI/
 
 ---
 
-## 📦 Publishing Releases
-
-### How to Create GitHub Release
-
-1. **Create a tag**
-   ```bash
-   git tag -a v1.0.0 -m "Release v1.0.0"
-   git push origin v1.0.0
-   ```
-
-2. **Upload Release**
-   - Go to GitHub repository page
-   - Click "Releases" -> "Draft a new release"
-   - Select the created tag
-   - Add release notes
-   - Upload packaged files (optional)
-   - Click "Publish release"
-
-### Package the project
-```bash
-# Package as zip (excludes .git and temp files)
-git archive --format=zip --prefix=ArchAI/ HEAD -o ArchAI_v1.0.0.zip
-```
-
----
-
 ## � License
 
 MIT License
